@@ -1,0 +1,4 @@
+self: mybatis306module -> mybatis306module 0.1
+
+require:
+    - ognl -> ognl 2.6.9
