@@ -1,10 +1,10 @@
-h1. {module name}
+h1. MyBatisPlay - MyBatis 3.0.6
 
-p(note). Write your module documentation in this file, possibly linking to other Textile files, and delete these notes when you are finished.
+p(note). This module allows you to use MyBatis persistence framework with play.
 
-p(note). Start with a clear statement of what the module is and what it is for. Link to any third-party libraries that the module is based on.
+p(note). Contains a fix for a classloader issue when using default mybatis cache (SerializedCache)
 
-p(note). Briefly describe why you might want to use this module in a Play application.
+p(note). It will detect changes to the xml configuration files and reinitialize the SqlSessionFactory
 
 h2. Sample application
 
@@ -12,20 +12,52 @@ p(note). Your module should contain a sample app in the @sample@ directory that 
 
 h2. Getting started
 
-p(note). Describe any installation that is required, beyond adding and resolving the module dependency.
+To install MyBatisPlay add it as a dependency in your dependencies.yml file:
+
+bc. require:
+      -play -> mybatisplay {version}
 
 h2. Configuration
 
-p(note). List any configuration options that the module uses, with an @h3.@ heading for each one.
+Define these minimum settings in @application.conf@ 
+
+h3. Database settings
+
+bc. 
+    db.url=jdbc:mysql://localhost:3306/mydb
+    db.driver=com.mysql.jdbc.Driver
+    db.user=dbuser
+    db.pass=dbpass
+
+h3. MyBatis configuration location
+
+bc. 
+    mybatis.configuration=mybatis/configuration.xml
+     
+You can base your configuration.xml file on this template:
+
+bc. 
+    <configuration>
+      <environments default="development">
+        <environment id="development">
+          <transactionManager type="JDBC" />
+          <dataSource type="POOLED">
+            <property name="driver" value="${driver}"/>
+            <property name="url" value="${url}"/>
+            <property name="username" value="${user}"/>
+            <property name="password" value="${pass}"/>
+          </dataSource>
+        </environment>
+      </environments>
+    </configuration>    
+
+
+See the included sample for a full example or the MyBatis Docs for details.
 
 h2. Usage
 
-p(note). Explain how to use the module, and describe any routes, controllers, models or views that the module provides.
+p(note). You can get access to a @SqlSessionFactory@ anywhere in your code by simply caling @IbatisSessionFactory.get()@
 
-h2. Tags
+bc. 
+    SqlSession session = IbatisSessionFactory.get().openSession();
 
-p(note). List any tags the module provides, with an @h3.@ heading for each one. Include the tags’ arguments.
-
-h2. Commands
-
-p(note). List any commands the module provides, with an @h3.@ heading for each one. Include the commands’ options.
