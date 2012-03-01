@@ -2,20 +2,26 @@ h1. MyBatisPlay - MyBatis 3.0.6
 
 p(note). This module allows you to use MyBatis persistence framework with play.
 
-p(note). Contains a fix for a classloader issue when using default mybatis cache (SerializedCache)
-
-p(note). It will detect changes to the xml configuration files and reinitialize the SqlSessionFactory
+ * Contains a fix for a classloader issue when using default mybatis cache (SerializedCache)
+ * It will detect changes to the xml configuration files and reinitialize the SqlSessionFactory
 
 h2. Sample application
 
-p(note). Your module should contain a sample app in the @sample@ directory that demonstrates the module. Describe how to run the demo here.
+p(note). There is a sample in  @samples-and-tests/mybatisapp@ folder.
+
+p(note). @cd@ to that directory and run:
+
+bc. 
+    play test
+    
+go to http://localhost:9000/@tests and run @GuestBookMapperTest@    
 
 h2. Getting started
 
 To install MyBatisPlay add it as a dependency in your dependencies.yml file:
 
 bc. require:
-      -play -> mybatisplay {version}
+      - play -> mybatisplay {version}
 
 h2. Configuration
 
