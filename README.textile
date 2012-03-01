@@ -1,0 +1,5 @@
+h1. MyBatisPlay module for Play! Framework Applications
+
+This module includes and provides support for MyBatis persistence framework.
+
+See the documentation folder for details.
