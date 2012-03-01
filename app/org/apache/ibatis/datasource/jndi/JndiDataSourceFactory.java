@@ -1,16 +1,17 @@
 package org.apache.ibatis.datasource.jndi;
 
-import org.apache.ibatis.datasource.DataSourceException;
-import org.apache.ibatis.datasource.DataSourceFactory;
+import java.util.Hashtable;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Properties;
 
 import javax.naming.Context;
 import javax.naming.InitialContext;
 import javax.naming.NamingException;
 import javax.sql.DataSource;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Properties;
+
+import org.apache.ibatis.datasource.DataSourceException;
+import org.apache.ibatis.datasource.DataSourceFactory;
 
 public class JndiDataSourceFactory implements DataSourceFactory {
 

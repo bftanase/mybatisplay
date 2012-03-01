@@ -1,5 +1,9 @@
 package org.apache.ibatis.builder;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.StringTokenizer;
+
 import org.apache.ibatis.mapping.ParameterMapping;
 import org.apache.ibatis.mapping.SqlSource;
 import org.apache.ibatis.parsing.GenericTokenParser;
@@ -7,10 +11,6 @@ import org.apache.ibatis.parsing.TokenHandler;
 import org.apache.ibatis.reflection.MetaClass;
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.TypeHandler;
-
-import java.util.ArrayList;
-import java.util.List;
-import java.util.StringTokenizer;
 
 public class SqlSourceBuilder extends BaseBuilder {
 

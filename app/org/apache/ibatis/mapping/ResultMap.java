@@ -1,8 +1,13 @@
 package org.apache.ibatis.mapping;
 
-import org.apache.ibatis.session.Configuration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Locale;
+import java.util.Set;
 
-import java.util.*;
+import org.apache.ibatis.session.Configuration;
 
 public class ResultMap {
 

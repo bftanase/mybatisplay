@@ -12,7 +12,6 @@ import java.util.Map;
 import java.util.Properties;
 
 import org.apache.ibatis.builder.BaseBuilder;
-import org.apache.ibatis.builder.BuilderException;
 import org.apache.ibatis.builder.CacheRefResolver;
 import org.apache.ibatis.builder.IncompleteCacheException;
 import org.apache.ibatis.builder.IncompleteResultMapException;

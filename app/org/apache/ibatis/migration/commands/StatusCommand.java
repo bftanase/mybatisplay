@@ -1,11 +1,11 @@
 package org.apache.ibatis.migration.commands;
 
-import org.apache.ibatis.migration.Change;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.apache.ibatis.migration.Change;
 
 public class StatusCommand extends BaseCommand {
 

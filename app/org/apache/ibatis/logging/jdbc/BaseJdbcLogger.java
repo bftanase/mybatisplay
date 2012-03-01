@@ -1,6 +1,12 @@
 package org.apache.ibatis.logging.jdbc;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.StringTokenizer;
 
 /**
  * Base class for proxies to do logging

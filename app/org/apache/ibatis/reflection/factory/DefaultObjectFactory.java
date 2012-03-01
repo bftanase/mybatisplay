@@ -1,10 +1,17 @@
 package org.apache.ibatis.reflection.factory;
 
-import org.apache.ibatis.reflection.ReflectionException;
-
 import java.io.Serializable;
 import java.lang.reflect.Constructor;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Properties;
+import java.util.Set;
+
+import org.apache.ibatis.reflection.ReflectionException;
 
 public class DefaultObjectFactory implements ObjectFactory, Serializable {
 

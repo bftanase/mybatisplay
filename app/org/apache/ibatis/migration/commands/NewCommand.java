@@ -1,11 +1,11 @@
 package org.apache.ibatis.migration.commands;
 
-import org.apache.ibatis.io.ExternalResources;
-import org.apache.ibatis.migration.MigrationException;
-
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.util.Properties;
+
+import org.apache.ibatis.io.ExternalResources;
+import org.apache.ibatis.migration.MigrationException;
 
 public class NewCommand extends BaseCommand {
 

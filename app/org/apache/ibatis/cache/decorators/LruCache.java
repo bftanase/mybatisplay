@@ -1,10 +1,10 @@
 package org.apache.ibatis.cache.decorators;
 
-import org.apache.ibatis.cache.Cache;
-
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.locks.ReadWriteLock;
+
+import org.apache.ibatis.cache.Cache;
 
 /**
  * Lru (first in, first out) cache decorator

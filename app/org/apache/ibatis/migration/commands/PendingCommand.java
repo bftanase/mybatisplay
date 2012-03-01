@@ -1,14 +1,14 @@
 package org.apache.ibatis.migration.commands;
 
-import org.apache.ibatis.jdbc.ScriptRunner;
-import org.apache.ibatis.migration.Change;
-import org.apache.ibatis.migration.MigrationException;
-import org.apache.ibatis.migration.MigrationReader;
-
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import org.apache.ibatis.jdbc.ScriptRunner;
+import org.apache.ibatis.migration.Change;
+import org.apache.ibatis.migration.MigrationException;
+import org.apache.ibatis.migration.MigrationReader;
 
 public class PendingCommand extends BaseCommand {
 

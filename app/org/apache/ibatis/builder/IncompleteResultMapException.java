@@ -1,6 +1,5 @@
 package org.apache.ibatis.builder;
 
-import org.apache.ibatis.builder.BuilderException;
 
 public class IncompleteResultMapException extends BuilderException {
   private static final long serialVersionUID = 5710340627945568032L;

@@ -1,9 +1,5 @@
 package org.apache.ibatis.migration.commands;
 
-import org.apache.ibatis.migration.Change;
-import org.apache.ibatis.migration.MigrationException;
-import org.apache.ibatis.migration.MigrationReader;
-
 import java.io.File;
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -11,6 +7,10 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Properties;
 import java.util.StringTokenizer;
+
+import org.apache.ibatis.migration.Change;
+import org.apache.ibatis.migration.MigrationException;
+import org.apache.ibatis.migration.MigrationReader;
 
 public class ScriptCommand extends BaseCommand {
 

@@ -1,12 +1,12 @@
 package org.apache.ibatis.migration;
 
-import org.apache.ibatis.parsing.PropertyParser;
-
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.Reader;
 import java.io.StringReader;
 import java.util.Properties;
+
+import org.apache.ibatis.parsing.PropertyParser;
 
 public class MigrationReader extends Reader {
 

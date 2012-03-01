@@ -1,6 +1,5 @@
 package org.apache.ibatis.builder;
 
-import org.apache.ibatis.builder.BuilderException;
 
 public class IncompleteCacheException extends BuilderException {
 	private static final long serialVersionUID = -3697292286890900315L;

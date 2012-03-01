@@ -1,5 +1,9 @@
 package org.apache.ibatis.executor.statement;
 
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.sql.Statement;
+
 import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.executor.ExecutorException;
@@ -14,10 +18,6 @@ import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 import org.apache.ibatis.type.TypeHandlerRegistry;
-
-import java.sql.Connection;
-import java.sql.SQLException;
-import java.sql.Statement;
 
 public abstract class BaseStatementHandler implements StatementHandler {
 

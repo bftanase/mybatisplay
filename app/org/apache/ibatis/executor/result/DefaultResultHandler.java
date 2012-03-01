@@ -1,10 +1,10 @@
 package org.apache.ibatis.executor.result;
 
-import org.apache.ibatis.session.ResultContext;
-import org.apache.ibatis.session.ResultHandler;
-
 import java.util.ArrayList;
 import java.util.List;
+
+import org.apache.ibatis.session.ResultContext;
+import org.apache.ibatis.session.ResultHandler;
 
 public class DefaultResultHandler implements ResultHandler {
 

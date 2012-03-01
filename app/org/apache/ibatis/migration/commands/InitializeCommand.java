@@ -1,9 +1,9 @@
 package org.apache.ibatis.migration.commands;
 
-import org.apache.ibatis.migration.MigrationException;
-
 import java.io.File;
 import java.util.Properties;
+
+import org.apache.ibatis.migration.MigrationException;
 
 public class InitializeCommand extends BaseCommand {
 

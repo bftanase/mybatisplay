@@ -1,12 +1,16 @@
 package org.apache.ibatis.cache.decorators;
 
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
+import java.io.Serializable;
+import java.util.concurrent.locks.ReadWriteLock;
+
 import org.apache.ibatis.cache.Cache;
 import org.apache.ibatis.cache.CacheException;
 
 import serialization.ThreadContextObjectInputStream;
-
-import java.io.*;
-import java.util.concurrent.locks.ReadWriteLock;
 
 public class SerializedCache implements Cache {
 

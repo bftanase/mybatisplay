@@ -1,4 +1,5 @@
-self: mybatis306module -> mybatis306module 0.1
+self: play -> mybatisplay 0.1.0
 
 require:
+    - play
     - ognl -> ognl 2.6.9

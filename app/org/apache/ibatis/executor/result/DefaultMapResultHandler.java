@@ -1,11 +1,11 @@
 package org.apache.ibatis.executor.result;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import org.apache.ibatis.reflection.MetaObject;
 import org.apache.ibatis.session.ResultContext;
 import org.apache.ibatis.session.ResultHandler;
-
-import java.util.HashMap;
-import java.util.Map;
 
 public class DefaultMapResultHandler implements ResultHandler {
 

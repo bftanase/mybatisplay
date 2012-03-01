@@ -1,20 +1,37 @@
 package org.apache.ibatis.builder.xml;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+
 import org.apache.ibatis.builder.BaseBuilder;
 import org.apache.ibatis.builder.BuilderException;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
-import org.apache.ibatis.builder.xml.dynamic.*;
+import org.apache.ibatis.builder.xml.dynamic.ChooseSqlNode;
+import org.apache.ibatis.builder.xml.dynamic.DynamicSqlSource;
+import org.apache.ibatis.builder.xml.dynamic.ForEachSqlNode;
+import org.apache.ibatis.builder.xml.dynamic.IfSqlNode;
+import org.apache.ibatis.builder.xml.dynamic.MixedSqlNode;
+import org.apache.ibatis.builder.xml.dynamic.SetSqlNode;
+import org.apache.ibatis.builder.xml.dynamic.SqlNode;
+import org.apache.ibatis.builder.xml.dynamic.TextSqlNode;
+import org.apache.ibatis.builder.xml.dynamic.TrimSqlNode;
+import org.apache.ibatis.builder.xml.dynamic.WhereSqlNode;
 import org.apache.ibatis.executor.keygen.Jdbc3KeyGenerator;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
 import org.apache.ibatis.executor.keygen.NoKeyGenerator;
 import org.apache.ibatis.executor.keygen.SelectKeyGenerator;
-import org.apache.ibatis.mapping.*;
+import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.mapping.ResultSetType;
+import org.apache.ibatis.mapping.SqlCommandType;
+import org.apache.ibatis.mapping.SqlSource;
+import org.apache.ibatis.mapping.StatementType;
 import org.apache.ibatis.parsing.XNode;
 import org.apache.ibatis.session.Configuration;
 import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
-
-import java.util.*;
 
 public class XMLStatementBuilder extends BaseBuilder {
 

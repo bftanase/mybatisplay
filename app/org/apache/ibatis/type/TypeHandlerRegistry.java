@@ -1,15 +1,15 @@
 package org.apache.ibatis.type;
 
-import org.apache.ibatis.io.ResolverUtil;
-
 import java.lang.reflect.Modifier;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.EnumMap;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
+
+import org.apache.ibatis.io.ResolverUtil;
 
 public final class TypeHandlerRegistry {
 

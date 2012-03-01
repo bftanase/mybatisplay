@@ -1,12 +1,17 @@
 package org.apache.ibatis.datasource.unpooled;
 
-import org.apache.ibatis.datasource.DataSourceException;
-import org.apache.ibatis.io.Resources;
+import java.io.PrintWriter;
+import java.sql.Connection;
+import java.sql.Driver;
+import java.sql.DriverManager;
+import java.sql.DriverPropertyInfo;
+import java.sql.SQLException;
+import java.util.Properties;
 
 import javax.sql.DataSource;
-import java.io.PrintWriter;
-import java.sql.*;
-import java.util.Properties;
+
+import org.apache.ibatis.datasource.DataSourceException;
+import org.apache.ibatis.io.Resources;
 
 public class UnpooledDataSource implements DataSource {
 
