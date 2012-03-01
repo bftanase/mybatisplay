@@ -1,6 +1,6 @@
-h1. MyBatisPlay 
+h1. MyBatisPlay
 
-p(note). This module allows you to use MyBatis persistence framework with play.
+p(note). This module allows you to use MyBatis persistence framework with play. Included is MyBatis version 3.0.6
 
  * Contains a fix for a classloader issue when using default mybatis cache (SerializedCache)
  * It will detect changes to the xml configuration files and reinitialize the SqlSessionFactory
