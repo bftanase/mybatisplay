@@ -1,4 +1,4 @@
-h1. MyBatisPlay - MyBatis 3.0.6
+h1. MyBatisPlay 
 
 p(note). This module allows you to use MyBatis persistence framework with play.
 
