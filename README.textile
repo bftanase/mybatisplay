@@ -3,3 +3,22 @@ h1. MyBatisPlay module for Play! Framework Applications
 This module includes and provides support for MyBatis persistence framework.
 
 See the documentation folder for details.
+
+h1. Quick Manual installation from github
+
+p(note). In case the module is not available on the play repository
+
+* cd to @%play.home%/modules@ (@%play.home%@ is the play framework installation folder)
+* clone the repository:
+
+bc.     git clone git://github.com/bftanase/mybatisplay.git
+
+* Rename mybatisplay to mybatisplay-0.1.0
+* test the sample:
+
+bc. 
+    cd samples-and-tests/mybatisapp
+    play deps
+    play test
+
+  * open browser to http://localhost:9000/@tests and run GuestBookMapperTest
