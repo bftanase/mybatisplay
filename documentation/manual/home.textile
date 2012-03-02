@@ -67,3 +67,19 @@ p(note). You can get access to a @SqlSessionFactory@ anywhere in your code by si
 bc. 
     SqlSession session = IbatisSessionFactory.get().openSession();
 
+h2. Known issues
+
+ * When starting play app from eclipse you'll get this stacktrace:
+
+bc. 
+    22:12:28,442 play.Logger.niceThrowable(Logger.java:570) - 570 ERROR ~ Error loading plugin LoadingPluginInfo{name='mybatisplay.plugins.MyBatisPlugin', index=1010, url=file:/D:/java/projects/eclipse-projects/play-mmr-ticketing/eclipse/classes/play.plugins}
+    java.lang.IllegalStateException: This plugin has already been initialized
+        at mybatisplay.plugins.MyBatisPlugin.<init>(MyBatisPlugin.java:37)
+    	at java.lang.Class.newInstance0(Class.java:355)
+    	at java.lang.Class.newInstance(Class.java:308)
+    	at play.plugins.PluginCollection.loadPlugins(PluginCollection.java:158)
+    	at play.Play.init(Play.java:294)
+    	at play.server.Server.main(Server.java:158)
+
+This happens because eclipse copies play.plugins to the classes folder and play is trying to load the plugin twice.
+Just ignore this exception.
