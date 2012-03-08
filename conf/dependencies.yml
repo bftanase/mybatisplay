@@ -1,4 +1,4 @@
-self: play -> mybatisplay 0.1.0
+self: play -> mybatisplay 0.1.2
 
 require:
     - play
