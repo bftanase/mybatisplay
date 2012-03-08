@@ -13,6 +13,7 @@ There is a sample in  @samples-and-tests/mybatisapp@ folder.
 @cd@ to that directory and run:
 
 bc. play test
+
     
 go to http://localhost:9000/@tests and run @GuestBookMapperTest@    
 
