@@ -2,9 +2,10 @@ package mybatisplay;
 
 import java.io.IOException;
 import java.io.Reader;
+import java.util.Observable;
+import java.util.Observer;
 import java.util.Properties;
 
-import mybatisplay.plugins.FileChangeCallback;
 import mybatisplay.plugins.MyBatisPlugin;
 
 import org.apache.ibatis.io.Resources;
@@ -20,7 +21,7 @@ import play.Play;
  *  @author bftanase@gmail.com
  *
  */
-public class IbatisSessionFactory implements FileChangeCallback{
+public class IbatisSessionFactory implements Observer{
   private static Logger log = Logger.getLogger(IbatisSessionFactory.class);
   private SqlSessionFactory sessionFactory;
 
@@ -28,7 +29,7 @@ public class IbatisSessionFactory implements FileChangeCallback{
   
   private IbatisSessionFactory(){
     
-    MyBatisPlugin.getInstance().setCallback(this);
+    MyBatisPlugin.getInstance().addObserver(this);
     instance = this;
   }
 
@@ -75,11 +76,10 @@ public class IbatisSessionFactory implements FileChangeCallback{
     return sessionFactory;
   }
 
-  
+
   @Override
-  public void onFileChange() {
+  public void update(Observable o, Object arg) {
     log.debug("resetting session factory");
     sessionFactory = null;
-    
   }
 }
