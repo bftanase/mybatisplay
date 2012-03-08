@@ -2,9 +2,9 @@ h1. MyBatisPlay
 
 This module allows you to use MyBatis persistence framework with play. Included is MyBatis version 3.0.6
 
- * Contains a fix for a classloader issue when using default mybatis cache (SerializedCache)
+* Contains a fix for a classloader issue when using default mybatis cache (SerializedCache)
 
- * It will detect changes to the xml configuration files and reinitialize the SqlSessionFactory
+* It will detect changes to the xml configuration files and reinitialize the SqlSessionFactory
 
 h2. Sample application
 
@@ -37,6 +37,7 @@ db.pass=dbpass
 h3. MyBatis configuration location
 
 bc. mybatis.configuration=mybatis/configuration.xml
+
      
 You can base your configuration.xml file on this template:
 
@@ -65,7 +66,7 @@ bc. SqlSession session = IbatisSessionFactory.get().openSession();
 
 h2. Known issues
 
- * When starting play app from eclipse you'll get this stacktrace:
+When starting play app from eclipse you'll get this stacktrace:
 
 bc. 22:12:28,442 play.Logger.niceThrowable(Logger.java:570) - 570 ERROR ~ Error loading plugin LoadingPluginInfo{name='mybatisplay.plugins.MyBatisPlugin', index=1010, url=file:/D:/java/projects/eclipse-projects/play-mmr-ticketing/eclipse/classes/play.plugins}
 java.lang.IllegalStateException: This plugin has already been initialized
