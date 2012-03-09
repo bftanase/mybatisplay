@@ -13,7 +13,10 @@ p(note). In case the module is not available on the play repository
 
 bc.     git clone git://github.com/bftanase/mybatisplay.git
 
-* Rename mybatisplay to mybatisplay-0.1.0
+* Rename mybatisplay to mybatisplay-{version}
+
+{version} is defined in @conf/dependencies.yml@
+
 * test the sample:
 
 bc. 
