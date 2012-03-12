@@ -1,10 +1,14 @@
 h1. MyBatisPlay
 
-This module allows you to use MyBatis persistence framework with play. Included is MyBatis version 3.0.6
+This module allows you to use MyBatis persistence framework with play. Included is MyBatis version 3.1.0
 
 * Contains a fix for a classloader issue when using default mybatis cache (SerializedCache)
 
 * It will detect changes to the xml configuration files and reinitialize the SqlSessionFactory
+
+h2. What's new?
+
+Updated MyBatis source to MyBatis 3.1.0
 
 h2. Sample application
 
@@ -13,7 +17,6 @@ There is a sample in  @samples-and-tests/mybatisapp@ folder.
 @cd@ to that directory and run:
 
 bc. play test
-
     
 go to http://localhost:9000/@tests and run @GuestBookMapperTest@    
 
