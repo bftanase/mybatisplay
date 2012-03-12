@@ -1,3 +1,18 @@
+/*
+ *    Copyright 2009-2012 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.builder.xml.dynamic;
 
 import java.util.HashMap;
@@ -13,6 +28,7 @@ import org.apache.ibatis.session.Configuration;
 public class DynamicContext {
 
   public static final String PARAMETER_OBJECT_KEY = "_parameter";
+  public static final String DATABASE_ID_KEY = "_databaseId";
 
   static {
     OgnlRuntime.setPropertyAccessor(ContextMap.class, new ContextAccessor());
@@ -30,6 +46,7 @@ public class DynamicContext {
       bindings = new ContextMap(null);
     }
     bindings.put(PARAMETER_OBJECT_KEY, parameterObject);
+    bindings.put(DATABASE_ID_KEY, configuration.getDatabaseId());
   }
 
   public Map<String, Object> getBindings() {
@@ -63,14 +80,15 @@ public class DynamicContext {
 
     @Override
     public Object get(Object key) {
-      if (super.containsKey(key)) {
-        return super.get(key);
+      String strKey = (String) key;
+      if (super.containsKey(strKey)) {
+        return super.get(strKey);
       }
 
       if (parameterMetaObject != null) {
-        Object object = parameterMetaObject.getValue(key.toString());
+        Object object = parameterMetaObject.getValue(strKey);
         if (object != null) {
-          super.put(key.toString(), object);
+          super.put(strKey, object);
         }
             
         return object;
@@ -104,7 +122,5 @@ public class DynamicContext {
       Map map = (Map) target;
       map.put(name, value);
     }
-
-
   }
 }

@@ -1,4 +1,28 @@
+/*
+ *    Copyright 2009-2012 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.executor;
+
+import org.apache.ibatis.executor.statement.StatementHandler;
+import org.apache.ibatis.logging.Log;
+import org.apache.ibatis.mapping.BoundSql;
+import org.apache.ibatis.mapping.MappedStatement;
+import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.session.ResultHandler;
+import org.apache.ibatis.session.RowBounds;
+import org.apache.ibatis.transaction.Transaction;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -8,14 +32,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.apache.ibatis.executor.statement.StatementHandler;
-import org.apache.ibatis.mapping.BoundSql;
-import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.session.ResultHandler;
-import org.apache.ibatis.session.RowBounds;
-import org.apache.ibatis.transaction.Transaction;
-
 public class ReuseExecutor extends BaseExecutor {
 
   private final Map<String, Statement> statementMap = new HashMap<String, Statement>();
@@ -24,39 +40,36 @@ public class ReuseExecutor extends BaseExecutor {
     super(configuration, transaction);
   }
 
-  public int doUpdate(MappedStatement ms, Object parameter)
-      throws SQLException {
+  public int doUpdate(MappedStatement ms, Object parameter) throws SQLException {
     Configuration configuration = ms.getConfiguration();
-    StatementHandler handler = configuration.newStatementHandler(this, ms, parameter, RowBounds.DEFAULT, null);
-    Statement stmt = prepareStatement(handler);
+    StatementHandler handler = configuration.newStatementHandler(this, ms, parameter, RowBounds.DEFAULT, null, null);
+    Statement stmt = prepareStatement(handler, ms.getStatementLog());
     return handler.update(stmt);
   }
 
-  public List doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler) throws SQLException {
+  public <E> List<E> doQuery(MappedStatement ms, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) throws SQLException {
     Configuration configuration = ms.getConfiguration();
-    StatementHandler handler = configuration.newStatementHandler(this, ms, parameter, rowBounds, resultHandler);
-    Statement stmt = prepareStatement(handler);
-    return handler.query(stmt, resultHandler);
+    StatementHandler handler = configuration.newStatementHandler(this, ms, parameter, rowBounds, resultHandler, boundSql);
+    Statement stmt = prepareStatement(handler, ms.getStatementLog());
+    return handler.<E>query(stmt, resultHandler);
   }
 
-  public List doFlushStatements(boolean isRollback)
-      throws SQLException {
+  public List<BatchResult> doFlushStatements(boolean isRollback) throws SQLException {
     for (Statement stmt : statementMap.values()) {
       closeStatement(stmt);
     }
     statementMap.clear();
-    return Collections.EMPTY_LIST;
+    return Collections.emptyList();
   }
 
-  private Statement prepareStatement(StatementHandler handler)
-      throws SQLException {
+  private Statement prepareStatement(StatementHandler handler, Log statementLog) throws SQLException {
     Statement stmt;
     BoundSql boundSql = handler.getBoundSql();
     String sql = boundSql.getSql();
     if (hasStatementFor(sql)) {
       stmt = getStatement(sql);
     } else {
-      Connection connection = transaction.getConnection();
+      Connection connection = getConnection(statementLog);
       stmt = handler.prepare(connection);
       putStatement(sql, stmt);
     }

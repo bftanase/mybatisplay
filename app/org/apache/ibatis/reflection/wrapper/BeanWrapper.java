@@ -1,4 +1,21 @@
+/*
+ *    Copyright 2009-2012 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.reflection.wrapper;
+
+import java.util.List;
 
 import org.apache.ibatis.reflection.ExceptionUtil;
 import org.apache.ibatis.reflection.MetaClass;
@@ -52,7 +69,7 @@ public class BeanWrapper extends BaseWrapper {
     return metaClass.getSetterNames();
   }
 
-  public Class getSetterType(String name) {
+  public Class<?> getSetterType(String name) {
     PropertyTokenizer prop = new PropertyTokenizer(name);
     if (prop.hasNext()) {
       MetaObject metaValue = metaObject.metaObjectForProperty(prop.getIndexedName());
@@ -66,7 +83,7 @@ public class BeanWrapper extends BaseWrapper {
     }
   }
 
-  public Class getGetterType(String name) {
+  public Class<?> getGetterType(String name) {
     PropertyTokenizer prop = new PropertyTokenizer(name);
     if (prop.hasNext()) {
       MetaObject metaValue = metaObject.metaObjectForProperty(prop.getIndexedName());
@@ -118,7 +135,7 @@ public class BeanWrapper extends BaseWrapper {
 
   public MetaObject instantiatePropertyValue(String name, PropertyTokenizer prop, ObjectFactory objectFactory) {
     MetaObject metaValue;
-    Class type = getSetterType(prop.getName());
+    Class<?> type = getSetterType(prop.getName());
     try {
       Object newObject = objectFactory.create(type);
       metaValue = MetaObject.forObject(newObject, metaObject.getObjectFactory(), metaObject.getObjectWrapperFactory());
@@ -140,7 +157,7 @@ public class BeanWrapper extends BaseWrapper {
     } catch (RuntimeException e) {
       throw e;
     } catch (Throwable t) {
-      throw new ReflectionException("Could not get property '" + prop.getName() + "' from " + object + ".  Cause: " + t.toString(), t);
+      throw new ReflectionException("Could not get property '" + prop.getName() + "' from " + object.getClass() + ".  Cause: " + t.toString(), t);
     }
   }
 
@@ -154,8 +171,20 @@ public class BeanWrapper extends BaseWrapper {
         throw ExceptionUtil.unwrapThrowable(t);
       }
     } catch (Throwable t) {
-      throw new ReflectionException("Could not set property '" + prop.getName() + "' of '" + object + "' with value '" + value + "' Cause: " + t.toString(), t);
+      throw new ReflectionException("Could not set property '" + prop.getName() + "' of '" + object.getClass() + "' with value '" + value + "' Cause: " + t.toString(), t);
     }
+  }
+
+  public boolean isCollection() {
+    return false;
+  }
+
+  public void add(Object element) {
+    throw new UnsupportedOperationException();
+  }
+
+  public <E> void addAll(List<E> list) {
+    throw new UnsupportedOperationException();
   }
 
 }

@@ -1,27 +1,42 @@
+/*
+ *    Copyright 2009-2011 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.cache.decorators;
+
+import org.apache.ibatis.cache.Cache;
 
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.LinkedList;
 import java.util.concurrent.locks.ReadWriteLock;
 
-import org.apache.ibatis.cache.Cache;
-
 /**
- * Weak Reference cache decorator
+ * Weak Reference cache decorator.
  * Thanks to Dr. Heinz Kabutz for his guidance here.
  */
 public class WeakCache implements Cache {
-  private final LinkedList hardLinksToAvoidGarbageCollection;
-  private final ReferenceQueue queueOfGarbageCollectedEntries;
+  private final LinkedList<Object> hardLinksToAvoidGarbageCollection;
+  private final ReferenceQueue<Object> queueOfGarbageCollectedEntries;
   private final Cache delegate;
   private int numberOfHardLinks;
 
   public WeakCache(Cache delegate) {
     this.delegate = delegate;
     this.numberOfHardLinks = 256;
-    this.hardLinksToAvoidGarbageCollection = new LinkedList();
-    this.queueOfGarbageCollectedEntries = new ReferenceQueue();
+    this.hardLinksToAvoidGarbageCollection = new LinkedList<Object>();
+    this.queueOfGarbageCollectedEntries = new ReferenceQueue<Object>();
   }
 
   public String getId() {
@@ -44,7 +59,8 @@ public class WeakCache implements Cache {
 
   public Object getObject(Object key) {
     Object result = null;
-    WeakReference weakReference = (WeakReference) delegate.getObject(key);
+    @SuppressWarnings("unchecked") // assumed delegate cache is totally managed by this cache
+    WeakReference<Object> weakReference = (WeakReference<Object>) delegate.getObject(key);
     if (weakReference != null) {
       result = weakReference.get();
       if (result == null) {
@@ -81,10 +97,10 @@ public class WeakCache implements Cache {
     }
   }
 
-  private static class WeakEntry extends WeakReference {
+  private static class WeakEntry extends WeakReference<Object> {
     private final Object key;
 
-    private WeakEntry(Object key, Object value, ReferenceQueue garbageCollectionQueue) {
+    private WeakEntry(Object key, Object value, ReferenceQueue<Object> garbageCollectionQueue) {
       super(value, garbageCollectionQueue);
       this.key = key;
     }

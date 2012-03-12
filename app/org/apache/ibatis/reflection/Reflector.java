@@ -1,3 +1,18 @@
+/*
+ *    Copyright 2009-2011 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.reflection;
 
 import java.lang.reflect.Constructor;
@@ -6,12 +21,12 @@ import java.lang.reflect.Method;
 import java.lang.reflect.ReflectPermission;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.ibatis.reflection.invoker.GetFieldInvoker;
 import org.apache.ibatis.reflection.invoker.Invoker;
@@ -19,7 +34,7 @@ import org.apache.ibatis.reflection.invoker.MethodInvoker;
 import org.apache.ibatis.reflection.invoker.SetFieldInvoker;
 import org.apache.ibatis.reflection.property.PropertyNamer;
 
-/**
+/*
  * This class represents a cached set of class definition information that
  * allows for easy mapping between property names and getter/setter methods.
  */
@@ -27,7 +42,7 @@ public class Reflector {
 
   private static boolean classCacheEnabled = true;
   private static final String[] EMPTY_STRING_ARRAY = new String[0];
-  private static final Map<Class<?>, Reflector> REFLECTOR_MAP = Collections.synchronizedMap(new HashMap<Class<?>, Reflector>());
+  private static final Map<Class<?>, Reflector> REFLECTOR_MAP = new ConcurrentHashMap<Class<?>, Reflector>();
 
   private Class<?> type;
   private String[] readablePropertyNames = EMPTY_STRING_ARRAY;
@@ -208,7 +223,7 @@ public class Reflector {
     return !(name.startsWith("$") || "serialVersionUID".equals(name) || "class".equals(name));
   }
 
-  /**
+  /*
    * This method returns an array containing all methods
    * declared in this class and any superclass.
    * We use this method, instead of the simpler Class.getMethods(),
@@ -287,7 +302,7 @@ public class Reflector {
     return true;
   }
 
-  /**
+  /*
    * Gets the name of the class the instance provides information for
    *
    * @return The class name
@@ -320,7 +335,7 @@ public class Reflector {
     return method;
   }
 
-  /**
+  /*
    * Gets the type for a property setter
    *
    * @param propertyName - the name of the property
@@ -334,7 +349,7 @@ public class Reflector {
     return clazz;
   }
 
-  /**
+  /*
    * Gets the type for a property getter
    *
    * @param propertyName - the name of the property
@@ -348,7 +363,7 @@ public class Reflector {
     return clazz;
   }
 
-  /**
+  /*
    * Gets an array of the readable properties for an object
    *
    * @return The array
@@ -357,7 +372,7 @@ public class Reflector {
     return readablePropertyNames;
   }
 
-  /**
+  /*
    * Gets an array of the writeable properties for an object
    *
    * @return The array
@@ -366,7 +381,7 @@ public class Reflector {
     return writeablePropertyNames;
   }
 
-  /**
+  /*
    * Check to see if a class has a writeable property by name
    *
    * @param propertyName - the name of the property to check
@@ -376,7 +391,7 @@ public class Reflector {
     return setMethods.keySet().contains(propertyName);
   }
 
-  /**
+  /*
    * Check to see if a class has a readable property by name
    *
    * @param propertyName - the name of the property to check
@@ -390,7 +405,7 @@ public class Reflector {
     return caseInsensitivePropertyMap.get(name.toUpperCase(Locale.ENGLISH));
   }
 
-  /**
+  /*
    * Gets an instance of ClassInfo for the specified class.
    *
    * @param clazz The class for which to lookup the method cache.
@@ -398,14 +413,13 @@ public class Reflector {
    */
   public static Reflector forClass(Class<?> clazz) {
     if (classCacheEnabled) {
-      synchronized (clazz) {
-        Reflector cached = REFLECTOR_MAP.get(clazz);
-        if (cached == null) {
-          cached = new Reflector(clazz);
-          REFLECTOR_MAP.put(clazz, cached);
-        }
-        return cached;
+      // synchronized (clazz) removed see issue #461
+      Reflector cached = REFLECTOR_MAP.get(clazz);
+      if (cached == null) {
+        cached = new Reflector(clazz);
+        REFLECTOR_MAP.put(clazz, cached);
       }
+      return cached;
     } else {
       return new Reflector(clazz);
     }

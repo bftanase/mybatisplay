@@ -1,3 +1,18 @@
+/*
+ *    Copyright 2009-2012 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.builder.xml;
 
 import java.util.ArrayList;
@@ -8,6 +23,7 @@ import java.util.Map;
 
 import org.apache.ibatis.builder.BaseBuilder;
 import org.apache.ibatis.builder.BuilderException;
+import org.apache.ibatis.builder.IncompleteElementException;
 import org.apache.ibatis.builder.MapperBuilderAssistant;
 import org.apache.ibatis.builder.xml.dynamic.ChooseSqlNode;
 import org.apache.ibatis.builder.xml.dynamic.DynamicSqlSource;
@@ -37,15 +53,25 @@ public class XMLStatementBuilder extends BaseBuilder {
 
   private MapperBuilderAssistant builderAssistant;
   private XNode context;
+  private String requiredDatabaseId;
 
   public XMLStatementBuilder(Configuration configuration, MapperBuilderAssistant builderAssistant, XNode context) {
+    this(configuration, builderAssistant, context, null);
+  }
+
+  public XMLStatementBuilder(Configuration configuration, MapperBuilderAssistant builderAssistant, XNode context, String databaseId) {
     super(configuration);
     this.builderAssistant = builderAssistant;
     this.context = context;
+    this.requiredDatabaseId = databaseId;
   }
 
   public void parseStatementNode() {
     String id = context.getStringAttribute("id");
+    String databaseId = context.getStringAttribute("databaseId");
+
+    if (!databaseIdMatchesCurrent(id, databaseId)) return;
+
     Integer fetchSize = context.getIntAttribute("fetchSize", null);
     Integer timeout = context.getIntAttribute("timeout", null);
     String parameterMap = context.getStringAttribute("parameterMap");
@@ -69,26 +95,44 @@ public class XMLStatementBuilder extends BaseBuilder {
     boolean useCache = context.getBooleanAttribute("useCache", isSelect);
 
     String keyProperty = context.getStringAttribute("keyProperty");
+    String keyColumn = context.getStringAttribute("keyColumn");
     KeyGenerator keyGenerator;
     String keyStatementId = id + SelectKeyGenerator.SELECT_KEY_SUFFIX;
-    keyStatementId = builderAssistant.applyCurrentNamespace(keyStatementId);
+    keyStatementId = builderAssistant.applyCurrentNamespace(keyStatementId, true);
     if (configuration.hasKeyGenerator(keyStatementId)) {
       keyGenerator = configuration.getKeyGenerator(keyStatementId);
     } else {
       keyGenerator = context.getBooleanAttribute("useGeneratedKeys",
           configuration.isUseGeneratedKeys() && SqlCommandType.INSERT.equals(sqlCommandType))
-          ? new Jdbc3KeyGenerator(context.getStringAttribute("keyColumn", null)) : new NoKeyGenerator();
+          ? new Jdbc3KeyGenerator() : new NoKeyGenerator();
     }
 
     builderAssistant.addMappedStatement(id, sqlSource, statementType, sqlCommandType,
         fetchSize, timeout, parameterMap, parameterTypeClass, resultMap, resultTypeClass,
-        resultSetTypeEnum, flushCache, useCache, keyGenerator, keyProperty);
+        resultSetTypeEnum, flushCache, useCache, keyGenerator, keyProperty, keyColumn, databaseId);
   }
 
-
-  public String getStatementIdWithNameSpace() {
-	  return builderAssistant.applyCurrentNamespace(context.getStringAttribute("id"));
+  private boolean databaseIdMatchesCurrent(String id, String databaseId) {
+    if (requiredDatabaseId != null) {
+      if (!requiredDatabaseId.equals(databaseId)) {
+        return false;
+      }
+    } else {
+      if (databaseId != null) {
+        return false;
+      }
+      // skip this statement if there is a previous one with a not null databaseId
+      id = builderAssistant.applyCurrentNamespace(id, false);
+      if (this.configuration.hasStatement(id, false)) {
+        MappedStatement previous = this.configuration.getMappedStatement(id);
+        if (previous.getDatabaseId() != null) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
+
   private List<SqlNode> parseDynamicTags(XNode node) {
     List<SqlNode> contents = new ArrayList<SqlNode>();
     NodeList children = node.getNode().getChildNodes();
@@ -141,6 +185,7 @@ public class XMLStatementBuilder extends BaseBuilder {
       StatementType statementType = StatementType.valueOf(nodeToHandle.getStringAttribute("statementType", StatementType.PREPARED.toString()));
       String keyProperty = nodeToHandle.getStringAttribute("keyProperty");
       String parameterType = parent.getStringAttribute("parameterType");
+      String databaseId = parent.getStringAttribute("databaseId");
       boolean executeBefore = "BEFORE".equals(nodeToHandle.getStringAttribute("order", "AFTER"));
       Class<?> parameterTypeClass = resolveClass(parameterType);
 
@@ -161,9 +206,9 @@ public class XMLStatementBuilder extends BaseBuilder {
 
       builderAssistant.addMappedStatement(id, sqlSource, statementType, sqlCommandType,
           fetchSize, timeout, parameterMap, parameterTypeClass, resultMap, resultTypeClass,
-          resultSetTypeEnum, flushCache, useCache, keyGenerator, keyProperty);
+          resultSetTypeEnum, flushCache, useCache, keyGenerator, keyProperty, null, databaseId);
 
-      id = builderAssistant.applyCurrentNamespace(id);
+      id = builderAssistant.applyCurrentNamespace(id, false);
 
       MappedStatement keyStatement = configuration.getMappedStatement(id, false);
       configuration.addKeyGenerator(id, new SelectKeyGenerator(keyStatement, executeBefore));
@@ -173,20 +218,20 @@ public class XMLStatementBuilder extends BaseBuilder {
   private class IncludeNodeHandler implements NodeHandler {
     public void handleNode(XNode nodeToHandle, List<SqlNode> targetContents) {
       String refid = nodeToHandle.getStringAttribute("refid");
-      refid = builderAssistant.applyCurrentNamespace(refid);
+      refid = builderAssistant.applyCurrentNamespace(refid, true);
       try {
-    	  XNode includeNode = configuration.getSqlFragments().get(refid);
+        XNode includeNode = configuration.getSqlFragments().get(refid);
+        if (includeNode == null) {
+          String nsrefid = builderAssistant.applyCurrentNamespace(refid, true);
+          includeNode = configuration.getSqlFragments().get(nsrefid);
           if (includeNode == null) {
-            String nsrefid = builderAssistant.applyCurrentNamespace(refid);
-            includeNode = configuration.getSqlFragments().get(nsrefid);
-            if (includeNode == null) {
-              throw new IncompleteStatementException("Could not find SQL statement to include with refid '" + refid + "'");
-            }
+            throw new IncompleteElementException("Could not find SQL statement to include with refid '" + refid + "'");
           }
-          MixedSqlNode mixedSqlNode = new MixedSqlNode(contents(includeNode));
-          targetContents.add(mixedSqlNode);
+        }
+        MixedSqlNode mixedSqlNode = new MixedSqlNode(contents(includeNode));
+        targetContents.add(mixedSqlNode);
       } catch (IllegalArgumentException e) {
-    	  throw new IncompleteStatementException("Could not find SQL statement to include with refid '" + refid + "'", e);
+        throw new IncompleteElementException("Could not find SQL statement to include with refid '" + refid + "'", e);
       }
     }
 
@@ -203,7 +248,7 @@ public class XMLStatementBuilder extends BaseBuilder {
       String prefixOverrides = nodeToHandle.getStringAttribute("prefixOverrides");
       String suffix = nodeToHandle.getStringAttribute("suffix");
       String suffixOverrides = nodeToHandle.getStringAttribute("suffixOverrides");
-      TrimSqlNode trim = new TrimSqlNode(configuration,mixedSqlNode, prefix, prefixOverrides, suffix, suffixOverrides);
+      TrimSqlNode trim = new TrimSqlNode(configuration, mixedSqlNode, prefix, prefixOverrides, suffix, suffixOverrides);
       targetContents.add(trim);
     }
   }
@@ -212,7 +257,7 @@ public class XMLStatementBuilder extends BaseBuilder {
     public void handleNode(XNode nodeToHandle, List<SqlNode> targetContents) {
       List<SqlNode> contents = parseDynamicTags(nodeToHandle);
       MixedSqlNode mixedSqlNode = new MixedSqlNode(contents);
-      WhereSqlNode where = new WhereSqlNode(configuration,mixedSqlNode);
+      WhereSqlNode where = new WhereSqlNode(configuration, mixedSqlNode);
       targetContents.add(where);
     }
   }
@@ -221,7 +266,7 @@ public class XMLStatementBuilder extends BaseBuilder {
     public void handleNode(XNode nodeToHandle, List<SqlNode> targetContents) {
       List<SqlNode> contents = parseDynamicTags(nodeToHandle);
       MixedSqlNode mixedSqlNode = new MixedSqlNode(contents);
-      SetSqlNode set = new SetSqlNode(configuration,mixedSqlNode);
+      SetSqlNode set = new SetSqlNode(configuration, mixedSqlNode);
       targetContents.add(set);
     }
   }

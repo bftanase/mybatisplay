@@ -1,3 +1,18 @@
+/*
+ *    Copyright 2009-2011 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.session;
 
 import java.io.InputStream;
@@ -128,36 +143,36 @@ public class SqlSessionManager implements SqlSessionFactory, SqlSession {
     return sqlSessionFactory.getConfiguration();
   }
 
-  public Object selectOne(String statement) {
-    return sqlSessionProxy.selectOne(statement);
+  public <T> T selectOne(String statement) {
+    return sqlSessionProxy.<T> selectOne(statement);
   }
 
-  public Object selectOne(String statement, Object parameter) {
-    return sqlSessionProxy.selectOne(statement, parameter);
+  public <T> T selectOne(String statement, Object parameter) {
+    return sqlSessionProxy.<T> selectOne(statement, parameter);
   }
 
-  public Map selectMap(String statement, String mapKey) {
-    return sqlSessionProxy.selectMap(statement, mapKey);
+  public <K, V> Map<K, V> selectMap(String statement, String mapKey) {
+    return sqlSessionProxy.<K, V> selectMap(statement, mapKey);
   }
 
-  public Map selectMap(String statement, Object parameter, String mapKey) {
-    return sqlSessionProxy.selectMap(statement, parameter, mapKey);
+  public <K, V> Map<K, V> selectMap(String statement, Object parameter, String mapKey) {
+    return sqlSessionProxy.<K, V> selectMap(statement, parameter, mapKey);
   }
 
-  public Map selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds) {
-    return sqlSessionProxy.selectMap(statement, parameter, mapKey, rowBounds);
+  public <K, V> Map<K, V> selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds) {
+    return sqlSessionProxy.<K, V> selectMap(statement, parameter, mapKey, rowBounds);
   }
 
-  public List selectList(String statement) {
-    return sqlSessionProxy.selectList(statement);
+  public <E> List<E> selectList(String statement) {
+    return sqlSessionProxy.<E> selectList(statement);
   }
 
-  public List selectList(String statement, Object parameter) {
-    return sqlSessionProxy.selectList(statement, parameter);
+  public <E> List<E> selectList(String statement, Object parameter) {
+    return sqlSessionProxy.<E> selectList(statement, parameter);
   }
 
-  public List selectList(String statement, Object parameter, RowBounds rowBounds) {
-    return sqlSessionProxy.selectList(statement, parameter, rowBounds);
+  public <E> List<E> selectList(String statement, Object parameter, RowBounds rowBounds) {
+    return sqlSessionProxy.<E> selectList(statement, parameter, rowBounds);
   }
 
   public void select(String statement, ResultHandler handler) {

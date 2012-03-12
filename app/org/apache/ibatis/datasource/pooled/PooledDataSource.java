@@ -1,3 +1,18 @@
+/*
+ *    Copyright 2009-2012 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.datasource.pooled;
 
 import java.io.PrintWriter;
@@ -7,6 +22,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
@@ -14,7 +30,7 @@ import org.apache.ibatis.datasource.unpooled.UnpooledDataSource;
 import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 
-/**
+/*
  * This is a simple, synchronous, thread-safe database connection pool.
  */
 public class PooledDataSource implements DataSource {
@@ -42,18 +58,22 @@ public class PooledDataSource implements DataSource {
 
   public PooledDataSource(String driver, String url, String username, String password) {
     dataSource = new UnpooledDataSource(driver, url, username, password);
+    expectedConnectionTypeCode = assembleConnectionTypeCode(dataSource.getUrl(), dataSource.getUsername(), dataSource.getPassword());
   }
 
   public PooledDataSource(String driver, String url, Properties driverProperties) {
     dataSource = new UnpooledDataSource(driver, url, driverProperties);
+    expectedConnectionTypeCode = assembleConnectionTypeCode(dataSource.getUrl(), dataSource.getUsername(), dataSource.getPassword());
   }
 
   public PooledDataSource(ClassLoader driverClassLoader, String driver, String url, String username, String password) {
     dataSource = new UnpooledDataSource(driverClassLoader, driver, url, username, password);
+    expectedConnectionTypeCode = assembleConnectionTypeCode(dataSource.getUrl(), dataSource.getUsername(), dataSource.getPassword());
   }
 
   public PooledDataSource(ClassLoader driverClassLoader, String driver, String url, Properties driverProperties) {
     dataSource = new UnpooledDataSource(driverClassLoader, driver, url, driverProperties);
+    expectedConnectionTypeCode = assembleConnectionTypeCode(dataSource.getUrl(), dataSource.getUsername(), dataSource.getPassword());
   }
 
   public Connection getConnection() throws SQLException {
@@ -116,7 +136,7 @@ public class PooledDataSource implements DataSource {
     forceCloseAll();
   }
 
-  /**
+  /*
    * The maximum number of active connections
    *
    * @param poolMaximumActiveConnections The maximum number of active connections
@@ -126,7 +146,7 @@ public class PooledDataSource implements DataSource {
     forceCloseAll();
   }
 
-  /**
+  /*
    * The maximum number of idle connections
    *
    * @param poolMaximumIdleConnections The maximum number of idle connections
@@ -136,7 +156,7 @@ public class PooledDataSource implements DataSource {
     forceCloseAll();
   }
 
-  /**
+  /*
    * The maximum time a connection can be used before it *may* be
    * given away again.
    *
@@ -147,7 +167,7 @@ public class PooledDataSource implements DataSource {
     forceCloseAll();
   }
 
-  /**
+  /*
    * The time to wait before retrying to get a connection
    *
    * @param poolTimeToWait The time to wait
@@ -157,7 +177,7 @@ public class PooledDataSource implements DataSource {
     forceCloseAll();
   }
 
-  /**
+  /*
    * The query to be used to check a connection
    *
    * @param poolPingQuery The query
@@ -167,7 +187,7 @@ public class PooledDataSource implements DataSource {
     forceCloseAll();
   }
 
-  /**
+  /*
    * Determines if the ping query should be used.
    *
    * @param poolPingEnabled True if we need to check a connection before using it
@@ -177,7 +197,7 @@ public class PooledDataSource implements DataSource {
     forceCloseAll();
   }
 
-  /**
+  /*
    * If a connection has not been used in this many milliseconds, ping the
    * database to make sure the connection is still good.
    *
@@ -244,7 +264,7 @@ public class PooledDataSource implements DataSource {
     return poolPingConnectionsNotUsedFor;
   }
 
-  /**
+  /*
    * Closes all active and idle connections in the pool
    */
   public void forceCloseAll() {
@@ -352,6 +372,7 @@ public class PooledDataSource implements DataSource {
           if (state.activeConnections.size() < poolMaximumActiveConnections) {
             // Can create new connection
             conn = new PooledConnection(dataSource.getConnection(), this);
+            @SuppressWarnings("unused") //used in logging, if enabled
             Connection realConn = conn.getRealConnection();
             if (log.isDebugEnabled()) {
               log.debug("Created connection " + conn.getRealHashCode() + ".");
@@ -433,7 +454,7 @@ public class PooledDataSource implements DataSource {
     return conn;
   }
 
-  /**
+  /*
    * Method to check to see if a connection is still usable
    *
    * @param conn - the connection to check
@@ -488,7 +509,7 @@ public class PooledDataSource implements DataSource {
     return result;
   }
 
-  /**
+  /*
    * Unwraps a pooled connection to get to the 'real' connection
    *
    * @param conn - the pooled connection to unwrap
@@ -507,10 +528,15 @@ public class PooledDataSource implements DataSource {
   }
 
   public <T> T unwrap(Class<T> iface) throws SQLException {
-    throw new UnsupportedOperationException();
+    return null;
   }
 
   public boolean isWrapperFor(Class<?> iface) throws SQLException {
-    throw new UnsupportedOperationException();
+    return false;
   }
+
+  public Logger getParentLogger() {
+    return Logger.getLogger(LogFactory.GLOBAL_LOGGER_NAME);
+  }
+
 }

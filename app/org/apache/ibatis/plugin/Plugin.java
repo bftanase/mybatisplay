@@ -1,3 +1,18 @@
+/*
+ *    Copyright 2009-2011 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.plugin;
 
 import java.lang.reflect.InvocationHandler;
@@ -48,7 +63,11 @@ public class Plugin implements InvocationHandler {
   }
 
   private static Map<Class<?>, Set<Method>> getSignatureMap(Interceptor interceptor) {
-    Signature[] sigs = interceptor.getClass().getAnnotation(Intercepts.class).value();
+    Intercepts interceptsAnnotation = interceptor.getClass().getAnnotation(Intercepts.class);
+    if (interceptsAnnotation == null) { // issue #251
+      throw new PluginException("No @Intercepts annotation was found in interceptor " + interceptor.getClass().getName());      
+    }
+    Signature[] sigs = interceptsAnnotation.value();
     Map<Class<?>, Set<Method>> signatureMap = new HashMap<Class<?>, Set<Method>>();
     for (Signature sig : sigs) {
       Set<Method> methods = signatureMap.get(sig.type());

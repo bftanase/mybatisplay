@@ -1,20 +1,31 @@
+/*
+ *    Copyright 2009-2011 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.mapping;
+
+import org.apache.ibatis.cache.Cache;
+import org.apache.ibatis.cache.CacheException;
+import org.apache.ibatis.cache.decorators.*;
+import org.apache.ibatis.cache.impl.PerpetualCache;
+import org.apache.ibatis.reflection.MetaObject;
 
 import java.lang.reflect.Constructor;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Properties;
-
-import org.apache.ibatis.cache.Cache;
-import org.apache.ibatis.cache.CacheException;
-import org.apache.ibatis.cache.decorators.FifoCache;
-import org.apache.ibatis.cache.decorators.LoggingCache;
-import org.apache.ibatis.cache.decorators.ScheduledCache;
-import org.apache.ibatis.cache.decorators.SerializedCache;
-import org.apache.ibatis.cache.decorators.SynchronizedCache;
-import org.apache.ibatis.cache.impl.PerpetualCache;
-import org.apache.ibatis.reflection.MetaObject;
 
 public class CacheBuilder {
   private String id;
@@ -66,11 +77,14 @@ public class CacheBuilder {
     setDefaultImplementations();
     Cache cache = newBaseCacheInstance(implementation, id);
     setCacheProperties(cache);
-    for (Class<? extends Cache> decorator : decorators) {
-      cache = newCacheDecoratorInstance(decorator, cache);
-      setCacheProperties(cache);
+    // issue #352, do not apply decorators to custom caches
+    if (cache.getClass().getName().startsWith("org.apache.ibatis")) {
+      for (Class<? extends Cache> decorator : decorators) {
+        cache = newCacheDecoratorInstance(decorator, cache);
+        setCacheProperties(cache);
+      }
+      cache = setStandardDecorators(cache);
     }
-    cache = setStandardDecorators(cache);
     return cache;
   }
 
@@ -85,21 +99,19 @@ public class CacheBuilder {
 
   private Cache setStandardDecorators(Cache cache) {
     try {
-      if (cache.getClass().getName().startsWith("org.apache.ibatis")) {
-        MetaObject metaCache = MetaObject.forObject(cache);
-        if (size != null && metaCache.hasSetter("size")) {
-          metaCache.setValue("size", size);
-        }
-        if (clearInterval != null) {
-          cache = new ScheduledCache(cache);
-          ((ScheduledCache) cache).setClearInterval(clearInterval);
-        }
-        if (readWrite) {
-          cache = new SerializedCache(cache);
-        }
-        cache = new LoggingCache(cache);
-        cache = new SynchronizedCache(cache);
+      MetaObject metaCache = MetaObject.forObject(cache);
+      if (size != null && metaCache.hasSetter("size")) {
+        metaCache.setValue("size", size);
       }
+      if (clearInterval != null) {
+        cache = new ScheduledCache(cache);
+        ((ScheduledCache) cache).setClearInterval(clearInterval);
+      }
+      if (readWrite) {
+        cache = new SerializedCache(cache);
+      }
+      cache = new LoggingCache(cache);
+      cache = new SynchronizedCache(cache);
       return cache;
     } catch (Exception e) {
       throw new CacheException("Error building standard cache decorators.  Cause: " + e, e);
@@ -109,11 +121,11 @@ public class CacheBuilder {
   private void setCacheProperties(Cache cache) {
     if (properties != null) {
       MetaObject metaCache = MetaObject.forObject(cache);
-      for (Map.Entry entry : properties.entrySet()) {
+      for (Map.Entry<Object, Object> entry : properties.entrySet()) {
         String name = (String) entry.getKey();
         String value = (String) entry.getValue();
         if (metaCache.hasSetter(name)) {
-          Class type = metaCache.getSetterType(name);
+          Class<?> type = metaCache.getSetterType(name);
           if (String.class == type) {
             metaCache.setValue(name, value);
           } else if (int.class == type

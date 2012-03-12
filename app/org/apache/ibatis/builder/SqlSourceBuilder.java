@@ -1,7 +1,27 @@
+/*
+ *    Copyright 2009-2012 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.builder;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.apache.ibatis.mapping.ParameterMapping;
@@ -10,9 +30,19 @@ import org.apache.ibatis.parsing.GenericTokenParser;
 import org.apache.ibatis.parsing.TokenHandler;
 import org.apache.ibatis.reflection.MetaClass;
 import org.apache.ibatis.session.Configuration;
+import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 
 public class SqlSourceBuilder extends BaseBuilder {
+  
+  private static final Set<String> parameterProperties = new HashSet<String>(Arrays.asList(new String[] { 
+      "javaType", 
+      "jdbcType", 
+      "mode", 
+      "numericScale", 
+      "resultMap",
+      "typeHandler", 
+      "jdbcTypeName" }));
 
   public SqlSourceBuilder(Configuration configuration) {
     super(configuration);
@@ -45,15 +75,14 @@ public class SqlSourceBuilder extends BaseBuilder {
     }
 
     private ParameterMapping buildParameterMapping(String content) {
-      StringTokenizer parameterMappingParts = new StringTokenizer(content, ", \n\r\t");
-      String propertyWithJdbcType = parameterMappingParts.nextToken();
-      String property = extractPropertyName(propertyWithJdbcType);
-      String jdbcType = extractJdbcType(propertyWithJdbcType);
+      Map<String, String> propertiesMap = parseParameterMapping(content);
+      String property = propertiesMap.get("property");
+      String jdbcType = propertiesMap.get("jdbcType");
       Class<?> propertyType;
       MetaClass metaClass = MetaClass.forClass(parameterType);
       if (typeHandlerRegistry.hasTypeHandler(parameterType)) {
         propertyType = parameterType;
-      } else if ("CURSOR".equals(jdbcType)) {
+      } else if (JdbcType.CURSOR.name().equals(jdbcType)) {
         propertyType = java.sql.ResultSet.class;
       } else if (metaClass.hasGetter(property)) {
         propertyType = metaClass.getGetterType(property);
@@ -64,32 +93,52 @@ public class SqlSourceBuilder extends BaseBuilder {
       if (jdbcType != null) {
         builder.jdbcType(resolveJdbcType(jdbcType));
       }
+      for (Map.Entry<String, String> entry : propertiesMap.entrySet()) {
+        String name = entry.getKey();
+        String value = entry.getValue();
+        if ("javaType".equals(name)) {
+          builder.javaType(resolveClass(value));
+        } else if ("jdbcType".equals(name)) {
+          builder.jdbcType(resolveJdbcType(value));
+        } else if ("mode".equals(name)) {
+          builder.mode(resolveParameterMode(value));
+        } else if ("numericScale".equals(name)) {
+          builder.numericScale(Integer.valueOf(value));
+        } else if ("resultMap".equals(name)) {
+          builder.resultMapId(value);
+        } else if ("typeHandler".equals(name)) {
+          builder.typeHandler((TypeHandler<?>) resolveInstance(value));
+        } else if ("jdbcTypeName".equals(name)) {
+          builder.jdbcTypeName(value);
+        }
+      }
+      return builder.build();
+    }
+    
+    private Map<String, String> parseParameterMapping(String content) {
+      Map<String, String> map = new HashMap<String, String>();
+      StringTokenizer parameterMappingParts = new StringTokenizer(content, ", \n\r\t");
+      String propertyWithJdbcType = parameterMappingParts.nextToken();
+      String property = extractPropertyName(propertyWithJdbcType);
+      map.put("property", property);
+      String jdbcType = extractJdbcType(propertyWithJdbcType);
+      if (jdbcType != null) map.put("jdbcType", jdbcType); // support old style #{property:TYPE} format
       while (parameterMappingParts.hasMoreTokens()) {
         String attribute = parameterMappingParts.nextToken();
         StringTokenizer attributeParts = new StringTokenizer(attribute, "=");
         if (attributeParts.countTokens() == 2) {
           String name = attributeParts.nextToken();
           String value = attributeParts.nextToken();
-          if ("javaType".equals(name)) {
-            builder.javaType(resolveClass(value));
-          } else if ("jdbcType".equals(name)) {
-            builder.jdbcType(resolveJdbcType(value));
-          } else if ("mode".equals(name)) {
-            builder.mode(resolveParameterMode(value));
-          } else if ("numericScale".equals(name)) {
-            builder.numericScale(Integer.valueOf(value));
-          } else if ("resultMap".equals(name)) {
-            builder.resultMapId(value);
-          } else if ("typeHandler".equals(name)) {
-            builder.typeHandler((TypeHandler) resolveInstance(value));
-          } else if ("jdbcTypeName".equals(name)) {
-            builder.jdbcTypeName(value);
+          if (parameterProperties.contains(name)) {
+            map.put(name, value);
+          } else {
+            throw new BuilderException("An invalid property '" + name + "' was found in mapping #{" + content + "}.  Valid properties are " + parameterProperties);
           }
         } else {
           throw new BuilderException("Improper inline parameter map format.  Should be: #{propName,attr1=val1,attr2=val2}");
         }
       }
-      return builder.build();
+      return map;
     }
 
     private String extractPropertyName(String property) {

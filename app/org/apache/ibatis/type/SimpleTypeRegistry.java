@@ -1,22 +1,23 @@
+/*
+ *    Copyright 2009-2012 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.type;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Date;
-import java.util.Enumeration;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Hashtable;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
-import java.util.TreeSet;
-import java.util.Vector;
+import java.util.*;
 
 public class SimpleTypeRegistry {
 
@@ -36,44 +37,16 @@ public class SimpleTypeRegistry {
     SIMPLE_TYPE_SET.add(Class.class);
     SIMPLE_TYPE_SET.add(BigInteger.class);
     SIMPLE_TYPE_SET.add(BigDecimal.class);
-
-    SIMPLE_TYPE_SET.add(Collection.class);
-    SIMPLE_TYPE_SET.add(Set.class);
-    SIMPLE_TYPE_SET.add(Map.class);
-    SIMPLE_TYPE_SET.add(List.class);
-    SIMPLE_TYPE_SET.add(HashMap.class);
-    SIMPLE_TYPE_SET.add(TreeMap.class);
-    SIMPLE_TYPE_SET.add(ArrayList.class);
-    SIMPLE_TYPE_SET.add(LinkedList.class);
-    SIMPLE_TYPE_SET.add(HashSet.class);
-    SIMPLE_TYPE_SET.add(TreeSet.class);
-    SIMPLE_TYPE_SET.add(Vector.class);
-    SIMPLE_TYPE_SET.add(Hashtable.class);
-    SIMPLE_TYPE_SET.add(Enumeration.class);
   }
 
-  /**
-   * Tells us if the class passed in is a knwon common type
+  /*
+   * Tells us if the class passed in is a known common type
    *
    * @param clazz The class to check
    * @return True if the class is known
    */
   public static boolean isSimpleType(Class<?> clazz) {
-    if (SIMPLE_TYPE_SET.contains(clazz)) {
-      return true;
-    } else if (Collection.class.isAssignableFrom(clazz)) {
-      return true;
-    } else if (Map.class.isAssignableFrom(clazz)) {
-      return true;
-    } else if (List.class.isAssignableFrom(clazz)) {
-      return true;
-    } else if (Set.class.isAssignableFrom(clazz)) {
-      return true;
-    } else if (Iterator.class.isAssignableFrom(clazz)) {
-      return true;
-    } else {
-      return false;
-    }
+    return SIMPLE_TYPE_SET.contains(clazz);
   }
 
 }

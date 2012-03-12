@@ -1,9 +1,24 @@
+/*
+ *    Copyright 2009-2012 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.cache;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class CacheKey {
+public class CacheKey implements Cloneable {
 
   public static final CacheKey NULL_CACHE_KEY = new NullCacheKey();
 
@@ -77,12 +92,19 @@ public class CacheKey {
   }
 
   public String toString() {
-    StringBuffer returnValue = new StringBuffer().append(hashcode).append(':').append(checksum);
+    StringBuilder returnValue = new StringBuilder().append(hashcode).append(':').append(checksum);
     for (int i = 0; i < updateList.size(); i++) {
       returnValue.append(':').append(updateList.get(i));
     }
 
     return returnValue.toString();
+  }
+
+  @Override
+  public CacheKey clone() throws CloneNotSupportedException {
+    CacheKey clonedCacheKey = (CacheKey) super.clone();
+    clonedCacheKey.updateList = new ArrayList<Object>(updateList);
+    return clonedCacheKey;
   }
 
 }

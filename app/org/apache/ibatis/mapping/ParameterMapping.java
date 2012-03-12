@@ -1,3 +1,18 @@
+/*
+ *    Copyright 2009-2011 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.mapping;
 
 import org.apache.ibatis.session.Configuration;
@@ -11,10 +26,10 @@ public class ParameterMapping {
 
   private String property;
   private ParameterMode mode;
-  private Class javaType = Object.class;
+  private Class<?> javaType = Object.class;
   private JdbcType jdbcType;
   private Integer numericScale;
-  private TypeHandler typeHandler;
+  private TypeHandler<?> typeHandler;
   private String resultMapId;
   private String jdbcTypeName;
 
@@ -24,14 +39,14 @@ public class ParameterMapping {
   public static class Builder {
     private ParameterMapping parameterMapping = new ParameterMapping();
 
-    public Builder(Configuration configuration, String property, TypeHandler typeHandler) {
+    public Builder(Configuration configuration, String property, TypeHandler<?> typeHandler) {
       parameterMapping.configuration = configuration;
       parameterMapping.property = property;
       parameterMapping.typeHandler = typeHandler;
       parameterMapping.mode = ParameterMode.IN;
     }
 
-    public Builder(Configuration configuration, String property, Class javaType) {
+    public Builder(Configuration configuration, String property, Class<?> javaType) {
       parameterMapping.configuration = configuration;
       parameterMapping.property = property;
       parameterMapping.javaType = javaType;
@@ -43,7 +58,7 @@ public class ParameterMapping {
       return this;
     }
 
-    public Builder javaType(Class javaType) {
+    public Builder javaType(Class<?> javaType) {
       parameterMapping.javaType = javaType;
       return this;
     }
@@ -63,7 +78,7 @@ public class ParameterMapping {
       return this;
     }
 
-    public Builder typeHandler(TypeHandler typeHandler) {
+    public Builder typeHandler(TypeHandler<?> typeHandler) {
       parameterMapping.typeHandler = typeHandler;
       return this;
     }
@@ -99,7 +114,7 @@ public class ParameterMapping {
     return mode;
   }
 
-  public Class getJavaType() {
+  public Class<?> getJavaType() {
     return javaType;
   }
 
@@ -111,7 +126,7 @@ public class ParameterMapping {
     return numericScale;
   }
 
-  public TypeHandler getTypeHandler() {
+  public TypeHandler<?> getTypeHandler() {
     return typeHandler;
   }
 
@@ -122,5 +137,5 @@ public class ParameterMapping {
   public String getJdbcTypeName() {
     return jdbcTypeName;
   }
-	
+
 }

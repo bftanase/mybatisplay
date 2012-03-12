@@ -1,3 +1,18 @@
+/*
+ *    Copyright 2009-2012 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.logging.jdbc;
 
 import java.lang.reflect.InvocationHandler;
@@ -11,18 +26,18 @@ import org.apache.ibatis.logging.Log;
 import org.apache.ibatis.logging.LogFactory;
 import org.apache.ibatis.reflection.ExceptionUtil;
 
-/**
+/*
  * ResultSet proxy to add logging
  */
-public class ResultSetLogger extends BaseJdbcLogger implements InvocationHandler {
+public final class ResultSetLogger extends BaseJdbcLogger implements InvocationHandler {
 
   private static final Log log = LogFactory.getLog(ResultSet.class);
 
-  boolean first = true;
+  private boolean first = true;
   private ResultSet rs;
 
-  private ResultSetLogger(ResultSet rs) {
-    super();
+  private ResultSetLogger(ResultSet rs, Log statementLog) {
+    super(statementLog);
     this.rs = rs;
   }
 
@@ -33,7 +48,7 @@ public class ResultSetLogger extends BaseJdbcLogger implements InvocationHandler
         if (((Boolean) o)) {
           ResultSetMetaData rsmd = rs.getMetaData();
           final int columnCount = rsmd.getColumnCount();
-          if (log.isDebugEnabled()) {
+          if (isDebugEnabled()) {
             if (first) {
               first = false;
               printColumnHeaders(rsmd, columnCount);
@@ -57,7 +72,7 @@ public class ResultSetLogger extends BaseJdbcLogger implements InvocationHandler
       row.append(colname);
       if (i != columnCount) row.append(", ");
     }
-    log.debug(row.toString());
+    debug(row.toString());
   }
 
   private void printColumnValues(int columnCount) throws SQLException {
@@ -74,28 +89,33 @@ public class ResultSetLogger extends BaseJdbcLogger implements InvocationHandler
       row.append(colname);
       if (i != columnCount) row.append(", ");
     }
-    log.debug(row.toString());
+    debug(row.toString());
   }
 
-  /**
+  /*
    * Creates a logging version of a ResultSet
    *
    * @param rs - the ResultSet to proxy
    * @return - the ResultSet with logging
    */
-  public static ResultSet newInstance(ResultSet rs) {
-    InvocationHandler handler = new ResultSetLogger(rs);
+  public static ResultSet newInstance(ResultSet rs, Log statementLog) {
+    InvocationHandler handler = new ResultSetLogger(rs, statementLog);
     ClassLoader cl = ResultSet.class.getClassLoader();
     return (ResultSet) Proxy.newProxyInstance(cl, new Class[]{ResultSet.class}, handler);
   }
 
-  /**
+  /*
    * Get the wrapped result set
    *
    * @return the resultSet
    */
   public ResultSet getRs() {
     return rs;
+  }
+
+  @Override
+  protected Log getLog() {
+    return log;
   }
 
 }

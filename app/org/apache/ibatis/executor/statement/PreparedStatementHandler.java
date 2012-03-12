@@ -1,3 +1,18 @@
+/*
+ *    Copyright 2009-2012 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.executor.statement;
 
 import java.sql.Connection;
@@ -11,18 +26,18 @@ import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.executor.Executor;
 import org.apache.ibatis.executor.keygen.Jdbc3KeyGenerator;
 import org.apache.ibatis.executor.keygen.KeyGenerator;
+import org.apache.ibatis.mapping.BoundSql;
 import org.apache.ibatis.mapping.MappedStatement;
 import org.apache.ibatis.session.ResultHandler;
 import org.apache.ibatis.session.RowBounds;
 
 public class PreparedStatementHandler extends BaseStatementHandler {
 
-  public PreparedStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameter, RowBounds rowBounds, ResultHandler resultHandler) {
-    super(executor, mappedStatement, parameter, rowBounds, resultHandler);
+  public PreparedStatementHandler(Executor executor, MappedStatement mappedStatement, Object parameter, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql) {
+    super(executor, mappedStatement, parameter, rowBounds, resultHandler, boundSql);
   }
 
-  public int update(Statement statement)
-      throws SQLException {
+  public int update(Statement statement) throws SQLException {
     PreparedStatement ps = (PreparedStatement) statement;
     ps.execute();
     int rows = ps.getUpdateCount();
@@ -32,23 +47,26 @@ public class PreparedStatementHandler extends BaseStatementHandler {
     return rows;
   }
 
-  public void batch(Statement statement)
-      throws SQLException {
+  public void batch(Statement statement) throws SQLException {
     PreparedStatement ps = (PreparedStatement) statement;
     ps.addBatch();
   }
 
-  public List query(Statement statement, ResultHandler resultHandler)
-      throws SQLException {
+  public <E> List<E> query(Statement statement, ResultHandler resultHandler) throws SQLException {
     PreparedStatement ps = (PreparedStatement) statement;
     ps.execute();
-    return resultSetHandler.handleResultSets(ps);
+    return resultSetHandler.<E> handleResultSets(ps);
   }
 
   protected Statement instantiateStatement(Connection connection) throws SQLException {
     String sql = boundSql.getSql();
     if (mappedStatement.getKeyGenerator() instanceof Jdbc3KeyGenerator) {
-      return connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
+      String[] keyColumnNames = mappedStatement.getKeyColumns();
+      if (keyColumnNames == null) {
+        return connection.prepareStatement(sql, PreparedStatement.RETURN_GENERATED_KEYS);
+      } else {
+        return connection.prepareStatement(sql, keyColumnNames);
+      }
     } else if (mappedStatement.getResultSetType() != null) {
       return connection.prepareStatement(sql, mappedStatement.getResultSetType().getValue(), ResultSet.CONCUR_READ_ONLY);
     } else {
@@ -56,8 +74,7 @@ public class PreparedStatementHandler extends BaseStatementHandler {
     }
   }
 
-  public void parameterize(Statement statement)
-      throws SQLException {
+  public void parameterize(Statement statement) throws SQLException {
     KeyGenerator keyGenerator = mappedStatement.getKeyGenerator();
     ErrorContext.instance().store();
     keyGenerator.processBefore(executor, mappedStatement, statement, boundSql.getParameterObject());

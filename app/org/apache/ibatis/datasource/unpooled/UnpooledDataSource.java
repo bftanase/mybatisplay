@@ -1,20 +1,34 @@
+/*
+ *    Copyright 2009-2012 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.datasource.unpooled;
 
 import java.io.PrintWriter;
 import java.sql.Connection;
-import java.sql.Driver;
 import java.sql.DriverManager;
-import java.sql.DriverPropertyInfo;
 import java.sql.SQLException;
 import java.util.Properties;
+import java.util.logging.Logger;
 
 import javax.sql.DataSource;
 
-import org.apache.ibatis.datasource.DataSourceException;
 import org.apache.ibatis.io.Resources;
+import org.apache.ibatis.logging.LogFactory;
 
 public class UnpooledDataSource implements DataSource {
-
+  
   private ClassLoader driverClassLoader;
   private Properties driverProperties;
   private boolean driverInitialized;
@@ -26,6 +40,10 @@ public class UnpooledDataSource implements DataSource {
 
   private boolean autoCommit;
   private Integer defaultTransactionIsolationLevel;
+
+  static {
+    DriverManager.getDrivers();
+  }
 
   public UnpooledDataSource() {
   }
@@ -59,26 +77,13 @@ public class UnpooledDataSource implements DataSource {
   }
 
   public Connection getConnection() throws SQLException {
-    initializeDriver();
-    Connection connection;
-    if (driverProperties != null) {
-      connection = DriverManager.getConnection(url, driverProperties);
-    } else if (username == null && password == null) {
-      connection = DriverManager.getConnection(url);
-    } else {
-      connection = DriverManager.getConnection(url, username, password);
-    }
-    configureConnection(connection);
-    return connection;
+    return doGetConnection(username, password);
   }
 
   public Connection getConnection(String username, String password) throws SQLException {
-    initializeDriver();
-    Connection connection = DriverManager.getConnection(url, username, password);
-    configureConnection(connection);
-    return connection;
+    return doGetConnection(username, password);
   }
-
+  
   public void setLoginTimeout(int loginTimeout) throws SQLException {
     DriverManager.setLoginTimeout(loginTimeout);
   }
@@ -160,6 +165,39 @@ public class UnpooledDataSource implements DataSource {
     this.defaultTransactionIsolationLevel = defaultTransactionIsolationLevel;
   }
 
+  private Connection doGetConnection(String username, String password) throws SQLException {
+    Properties props = new Properties(driverProperties);
+    if (username != null) {
+      props.setProperty("user", username);
+    }
+    if (password != null) {
+      props.setProperty("password", password);
+    }
+    return doGetConnection(props);
+  }
+
+  private Connection doGetConnection(Properties properties) throws SQLException {
+    initializeDriver();
+    Connection connection = DriverManager.getConnection(url, properties);
+    configureConnection(connection);
+    return connection;
+  }
+
+  private synchronized void initializeDriver() throws SQLException {
+    if (!driverInitialized) {
+      driverInitialized = true;
+      try {
+        if (driverClassLoader != null) {
+          Class.forName(driver, true, driverClassLoader);
+        } else {
+          Resources.classForName(driver);
+        }
+      } catch (Exception e) {
+        throw new SQLException("Error setting driver on UnpooledDataSource. Cause: " + e);
+      }
+    }
+  }
+
   private void configureConnection(Connection conn) throws SQLException {
     if (autoCommit != conn.getAutoCommit()) {
       conn.setAutoCommit(autoCommit);
@@ -169,60 +207,16 @@ public class UnpooledDataSource implements DataSource {
     }
   }
 
-  private synchronized void initializeDriver() {
-    if (!driverInitialized) {
-      driverInitialized = true;
-      Class driverType;
-      try {
-        if (driverClassLoader != null) {
-          driverType = Class.forName(driver, true, driverClassLoader);
-        } else {
-          driverType = Resources.classForName(driver);
-        }
-        DriverManager.registerDriver(new DriverProxy((Driver) driverType.newInstance()));
-      } catch (Exception e) {
-        throw new DataSourceException("Error setting driver on UnpooledDataSource. Cause: " + e, e);
-      }
-    }
-  }
-
-  private static class DriverProxy implements Driver {
-    private Driver driver;
-
-    DriverProxy(Driver d) {
-      this.driver = d;
-    }
-
-    public boolean acceptsURL(String u) throws SQLException {
-      return this.driver.acceptsURL(u);
-    }
-
-    public Connection connect(String u, Properties p) throws SQLException {
-      return this.driver.connect(u, p);
-    }
-
-    public int getMajorVersion() {
-      return this.driver.getMajorVersion();
-    }
-
-    public int getMinorVersion() {
-      return this.driver.getMinorVersion();
-    }
-
-    public DriverPropertyInfo[] getPropertyInfo(String u, Properties p) throws SQLException {
-      return this.driver.getPropertyInfo(u, p);
-    }
-
-    public boolean jdbcCompliant() {
-      return this.driver.jdbcCompliant();
-    }
-  }
-
   public <T> T unwrap(Class<T> iface) throws SQLException {
-    throw new UnsupportedOperationException();
+    throw new SQLException(getClass().getName() + " is not a wrapper.");
   }
 
   public boolean isWrapperFor(Class<?> iface) throws SQLException {
-    throw new UnsupportedOperationException();
+    return false;
   }
+
+  public Logger getParentLogger() {
+    return Logger.getLogger(LogFactory.GLOBAL_LOGGER_NAME);
+  }
+
 }

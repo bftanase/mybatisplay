@@ -1,23 +1,34 @@
+/*
+ *    Copyright 2009-2011 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.io;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
+import java.io.*;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.charset.Charset;
 import java.util.Properties;
 
-/**
+/*
  * A class to simplify access to resources through the classloader.
  */
 public class Resources {
 
   private static ClassLoaderWrapper classLoaderWrapper = new ClassLoaderWrapper();
 
-  /**
+  /*
    * Charset to use when calling getResourceAsReader.
    * null means use the system default.
    */
@@ -26,7 +37,7 @@ public class Resources {
   Resources() {
   }
 
-  /**
+  /*
    * Returns the default classloader (may be null).
    *
    * @return The default classloader
@@ -35,7 +46,7 @@ public class Resources {
     return classLoaderWrapper.defaultClassLoader;
   }
 
-  /**
+  /*
    * Sets the default classloader
    *
    * @param defaultClassLoader - the new default ClassLoader
@@ -44,7 +55,7 @@ public class Resources {
     classLoaderWrapper.defaultClassLoader = defaultClassLoader;
   }
 
-  /**
+  /*
    * Returns the URL of the resource on the classpath
    *
    * @param resource The resource to find
@@ -55,7 +66,7 @@ public class Resources {
     return classLoaderWrapper.getResourceAsURL(resource);
   }
 
-  /**
+  /*
    * Returns the URL of the resource on the classpath
    *
    * @param loader   The classloader used to fetch the resource
@@ -69,7 +80,7 @@ public class Resources {
     return url;
   }
 
-  /**
+  /*
    * Returns a resource on the classpath as a Stream object
    *
    * @param resource The resource to find
@@ -80,7 +91,7 @@ public class Resources {
     return getResourceAsStream(null, resource);
   }
 
-  /**
+  /*
    * Returns a resource on the classpath as a Stream object
    *
    * @param loader   The classloader used to fetch the resource
@@ -94,7 +105,7 @@ public class Resources {
     return in;
   }
 
-  /**
+  /*
    * Returns a resource on the classpath as a Properties object
    *
    * @param resource The resource to find
@@ -109,7 +120,7 @@ public class Resources {
     return props;
   }
 
-  /**
+  /*
    * Returns a resource on the classpath as a Properties object
    *
    * @param loader   The classloader used to fetch the resource
@@ -125,7 +136,7 @@ public class Resources {
     return props;
   }
 
-  /**
+  /*
    * Returns a resource on the classpath as a Reader object
    *
    * @param resource The resource to find
@@ -142,7 +153,7 @@ public class Resources {
     return reader;
   }
 
-  /**
+  /*
    * Returns a resource on the classpath as a Reader object
    *
    * @param loader   The classloader used to fetch the resource
@@ -160,7 +171,7 @@ public class Resources {
     return reader;
   }
 
-  /**
+  /*
    * Returns a resource on the classpath as a File object
    *
    * @param resource The resource to find
@@ -171,7 +182,7 @@ public class Resources {
     return new File(getResourceURL(resource).getFile());
   }
 
-  /**
+  /*
    * Returns a resource on the classpath as a File object
    *
    * @param loader   - the classloader used to fetch the resource
@@ -183,7 +194,7 @@ public class Resources {
     return new File(getResourceURL(loader, resource).getFile());
   }
 
-  /**
+  /*
    * Gets a URL as an input stream
    *
    * @param urlString - the URL to get
@@ -196,7 +207,7 @@ public class Resources {
     return conn.getInputStream();
   }
 
-  /**
+  /*
    * Gets a URL as a Reader
    *
    * @param urlString - the URL to get
@@ -213,7 +224,7 @@ public class Resources {
     return reader;
   }
 
-  /**
+  /*
    * Gets a URL as a Properties object
    *
    * @param urlString - the URL to get
@@ -228,7 +239,7 @@ public class Resources {
     return props;
   }
 
-  /**
+  /*
    * Loads a class
    *
    * @param className - the class to fetch

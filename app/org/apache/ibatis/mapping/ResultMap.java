@@ -1,18 +1,27 @@
+/*
+ *    Copyright 2009-2011 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.mapping;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Locale;
-import java.util.Set;
 
 import org.apache.ibatis.session.Configuration;
 
-public class ResultMap {
+import java.util.*;
 
+public class ResultMap {
   private String id;
-  private Class type;
+  private Class<?> type;
   private List<ResultMapping> resultMappings;
   private List<ResultMapping> idResultMappings;
   private List<ResultMapping> constructorResultMappings;
@@ -20,6 +29,7 @@ public class ResultMap {
   private Set<String> mappedColumns;
   private Discriminator discriminator;
   private boolean hasNestedResultMaps;
+  private boolean hasNestedQueries;
 
   private ResultMap() {
   }
@@ -27,7 +37,7 @@ public class ResultMap {
   public static class Builder {
     private ResultMap resultMap = new ResultMap();
 
-    public Builder(Configuration configuration, String id, Class type, List<ResultMapping> resultMappings) {
+    public Builder(Configuration configuration, String id, Class<?> type, List<ResultMapping> resultMappings) {
       resultMap.id = id;
       resultMap.type = type;
       resultMap.resultMappings = resultMappings;
@@ -38,16 +48,20 @@ public class ResultMap {
       return this;
     }
 
-    public Class type() {
+    public Class<?> type() {
       return resultMap.type;
     }
 
     public ResultMap build() {
+      if (resultMap.id == null) {
+        throw new IllegalArgumentException("ResultMaps must have an id");
+      }
       resultMap.mappedColumns = new HashSet<String>();
       resultMap.idResultMappings = new ArrayList<ResultMapping>();
       resultMap.constructorResultMappings = new ArrayList<ResultMapping>();
       resultMap.propertyResultMappings = new ArrayList<ResultMapping>();
       for (ResultMapping resultMapping : resultMap.resultMappings) {
+        resultMap.hasNestedQueries = resultMap.hasNestedQueries || resultMapping.getNestedQueryId() != null;
         resultMap.hasNestedResultMaps = resultMap.hasNestedResultMaps || resultMapping.getNestedResultMapId() != null;
         final String column = resultMapping.getColumn();
         if (column != null) {
@@ -90,10 +104,13 @@ public class ResultMap {
     return hasNestedResultMaps;
   }
 
-  public Class getType() {
-    return type;
+  public boolean hasNestedQueries() {
+    return hasNestedQueries;
   }
 
+  public Class<?> getType() {
+    return type;
+  }
 
   public List<ResultMapping> getResultMappings() {
     return resultMappings;

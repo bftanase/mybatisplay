@@ -1,45 +1,62 @@
+/*
+ *    Copyright 2009-2011 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.session.defaults;
 
-import java.sql.Connection;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
+import org.apache.ibatis.binding.BindingException;
 import org.apache.ibatis.exceptions.ExceptionFactory;
 import org.apache.ibatis.exceptions.TooManyResultsException;
 import org.apache.ibatis.executor.BatchResult;
-import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.executor.Executor;
+import org.apache.ibatis.executor.ErrorContext;
 import org.apache.ibatis.executor.result.DefaultMapResultHandler;
 import org.apache.ibatis.executor.result.DefaultResultContext;
 import org.apache.ibatis.mapping.MappedStatement;
-import org.apache.ibatis.session.Configuration;
-import org.apache.ibatis.session.ResultHandler;
-import org.apache.ibatis.session.RowBounds;
-import org.apache.ibatis.session.SqlSession;
+import org.apache.ibatis.session.*;
+
+import java.sql.Connection;
+import java.sql.SQLException;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class DefaultSqlSession implements SqlSession {
 
   private Configuration configuration;
   private Executor executor;
 
-  private boolean autoCommit;
   private boolean dirty;
 
+  @Deprecated
   public DefaultSqlSession(Configuration configuration, Executor executor, boolean autoCommit) {
+    this(configuration, executor);
+  }
+
+  public DefaultSqlSession(Configuration configuration, Executor executor) {
     this.configuration = configuration;
     this.executor = executor;
-    this.autoCommit = autoCommit;
     this.dirty = false;
   }
 
-  public Object selectOne(String statement) {
-    return selectOne(statement, null);
+  public <T> T selectOne(String statement) {
+    return this.<T>selectOne(statement, null);
   }
 
-  public Object selectOne(String statement, Object parameter) {
+  public <T> T selectOne(String statement, Object parameter) {
     // Popular vote was to return null on 0 results and throw exception on too many.
-    List list = selectList(statement, parameter);
+    List<T> list = this.<T>selectList(statement, parameter);
     if (list.size() == 1) {
       return list.get(0);
     } else if (list.size() > 1) {
@@ -49,37 +66,40 @@ public class DefaultSqlSession implements SqlSession {
     }
   }
 
-  public Map selectMap(String statement, String mapKey) {
-    return selectMap(statement, null, mapKey, RowBounds.DEFAULT);
+  public <K, V> Map<K, V> selectMap(String statement, String mapKey) {
+    return this.<K, V>selectMap(statement, null, mapKey, RowBounds.DEFAULT);
   }
 
-  public Map selectMap(String statement, Object parameter, String mapKey) {
-    return selectMap(statement, parameter, mapKey, RowBounds.DEFAULT);
+  public <K, V> Map<K, V> selectMap(String statement, Object parameter, String mapKey) {
+    return this.<K, V>selectMap(statement, parameter, mapKey, RowBounds.DEFAULT);
   }
 
-  public Map selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds) {
-    final List list = selectList(statement, parameter, rowBounds);
-    final DefaultMapResultHandler mapResultHandler = new DefaultMapResultHandler(mapKey);
+  public <K, V> Map<K, V> selectMap(String statement, Object parameter, String mapKey, RowBounds rowBounds) {
+    final List<?> list = selectList(statement, parameter, rowBounds);
+    final DefaultMapResultHandler<K, V> mapResultHandler = new DefaultMapResultHandler<K, V>(mapKey,
+        configuration.getObjectFactory());
     final DefaultResultContext context = new DefaultResultContext();
     for (Object o : list) {
       context.nextResultObject(o);
       mapResultHandler.handleResult(context);
     }
-    return mapResultHandler.getMappedResults();
+    Map<K, V> selectedMap = mapResultHandler.getMappedResults();
+    return selectedMap;
   }
 
-  public List selectList(String statement) {
-    return selectList(statement, null);
+  public <E> List<E> selectList(String statement) {
+    return this.<E>selectList(statement, null);
   }
 
-  public List selectList(String statement, Object parameter) {
-    return selectList(statement, parameter, RowBounds.DEFAULT);
+  public <E> List<E> selectList(String statement, Object parameter) {
+    return this.<E>selectList(statement, parameter, RowBounds.DEFAULT);
   }
 
-  public List selectList(String statement, Object parameter, RowBounds rowBounds) {
+  public <E> List<E> selectList(String statement, Object parameter, RowBounds rowBounds) {
     try {
       MappedStatement ms = configuration.getMappedStatement(statement);
-      return executor.query(ms, wrapCollection(parameter), rowBounds, Executor.NO_RESULT_HANDLER);
+      List<E> result = executor.<E>query(ms, wrapCollection(parameter), rowBounds, Executor.NO_RESULT_HANDLER);
+      return result;
     } catch (Exception e) {
       throw ExceptionFactory.wrapException("Error querying database.  Cause: " + e, e);
     } finally {
@@ -135,7 +155,7 @@ public class DefaultSqlSession implements SqlSession {
   }
 
   public int delete(String statement, Object parameter) {
-    return update(statement, wrapCollection(parameter));
+    return update(statement, parameter);
   }
 
   public void commit() {
@@ -192,11 +212,15 @@ public class DefaultSqlSession implements SqlSession {
   }
 
   public <T> T getMapper(Class<T> type) {
-    return configuration.getMapper(type, this);
+    return configuration.<T>getMapper(type, this);
   }
 
   public Connection getConnection() {
-    return executor.getTransaction().getConnection();
+    try {
+      return executor.getTransaction().getConnection();
+    } catch (SQLException e) {
+      throw ExceptionFactory.wrapException("Error getting a new connection.  Cause: " + e, e);
+    }
   }
 
   public void clearCache() {
@@ -204,20 +228,34 @@ public class DefaultSqlSession implements SqlSession {
   }
 
   private boolean isCommitOrRollbackRequired(boolean force) {
-    return (!autoCommit && dirty) || force;
+    return dirty || force;
   }
 
   private Object wrapCollection(final Object object) {
     if (object instanceof List) {
-      return new HashMap() {{
-        put("list", object);
-      }};
+      StrictMap<Object> map = new StrictMap<Object>();
+      map.put("list", object);
+      return map;
     } else if (object != null && object.getClass().isArray()) {
-      return new HashMap() {{
-        put("array", object);
-      }};
+      StrictMap<Object> map = new StrictMap<Object>();
+      map.put("array", object);
+      return map;
     }
     return object;
+  }
+
+  public static class StrictMap<V> extends HashMap<String, V> {
+
+    private static final long serialVersionUID = -5741767162221585340L;
+
+    @Override
+    public V get(Object key) {
+      if (!super.containsKey(key)) {
+        throw new BindingException("Parameter '" + key + "' not found. Available parameters are " + this.keySet());
+      }
+      return super.get(key);
+    }
+
   }
 
 }

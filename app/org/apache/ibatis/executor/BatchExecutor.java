@@ -1,3 +1,18 @@
+/*
+ *    Copyright 2009-2012 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.executor;
 
 import java.sql.BatchUpdateException;
@@ -25,25 +40,28 @@ public class BatchExecutor extends BaseExecutor {
   private final List<Statement> statementList = new ArrayList<Statement>();
   private final List<BatchResult> batchResultList = new ArrayList<BatchResult>();
   private String currentSql;
+  private MappedStatement currentStatement;
 
   public BatchExecutor(Configuration configuration, Transaction transaction) {
     super(configuration, transaction);
   }
 
-  public int doUpdate(MappedStatement ms, Object parameterObject)
-      throws SQLException {
-    Configuration configuration = ms.getConfiguration();
-    StatementHandler handler = configuration.newStatementHandler(this, ms, parameterObject, RowBounds.DEFAULT, null);
-    BoundSql boundSql = handler.getBoundSql();
-    String sql = boundSql.getSql();
-    Statement stmt;
-    if (currentSql != null && sql.hashCode() == currentSql.hashCode() && sql.length() == currentSql.length()) {
+  public int doUpdate(MappedStatement ms, Object parameterObject) throws SQLException {
+    final Configuration configuration = ms.getConfiguration();
+    final StatementHandler handler = configuration.newStatementHandler(this, ms, parameterObject, RowBounds.DEFAULT, null, null);
+    final BoundSql boundSql = handler.getBoundSql();
+    final String sql = boundSql.getSql();
+    final Statement stmt;
+    if (sql.equals(currentSql) && ms.equals(currentStatement)) {
       int last = statementList.size() - 1;
       stmt = statementList.get(last);
+      BatchResult batchResult = batchResultList.get(last);
+      batchResult.addParameterObject(parameterObject);
     } else {
-      Connection connection = transaction.getConnection();
+      Connection connection = getConnection(ms.getStatementLog());
       stmt = handler.prepare(connection);
       currentSql = sql;
+      currentStatement = ms;
       statementList.add(stmt);
       batchResultList.add(new BatchResult(ms, sql, parameterObject));
     }
@@ -52,27 +70,27 @@ public class BatchExecutor extends BaseExecutor {
     return BATCH_UPDATE_RETURN_VALUE;
   }
 
-  public List doQuery(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler)
+  public <E> List<E> doQuery(MappedStatement ms, Object parameterObject, RowBounds rowBounds, ResultHandler resultHandler, BoundSql boundSql)
       throws SQLException {
     Statement stmt = null;
     try {
       flushStatements();
       Configuration configuration = ms.getConfiguration();
-      StatementHandler handler = configuration.newStatementHandler(this, ms, parameterObject, rowBounds, resultHandler);
-      Connection connection = transaction.getConnection();
+      StatementHandler handler = configuration.newStatementHandler(this, ms, parameterObject, rowBounds, resultHandler, boundSql);
+      Connection connection = getConnection(ms.getStatementLog());
       stmt = handler.prepare(connection);
       handler.parameterize(stmt);
-      return handler.query(stmt, resultHandler);
+      return handler.<E>query(stmt, resultHandler);
     } finally {
       closeStatement(stmt);
     }
   }
-  
+
   public List<BatchResult> doFlushStatements(boolean isRollback) throws SQLException {
     try {
       List<BatchResult> results = new ArrayList<BatchResult>();
       if (isRollback) {
-        return Collections.EMPTY_LIST;
+        return Collections.emptyList();
       } else {
         for (int i = 0, n = statementList.size(); i < n; i++) {
           Statement stmt = statementList.get(i);
@@ -80,10 +98,15 @@ public class BatchExecutor extends BaseExecutor {
           try {
             batchResult.setUpdateCounts(stmt.executeBatch());
             MappedStatement ms = batchResult.getMappedStatement();
-            Object parameter = batchResult.getParameterObject();
+            List<Object> parameterObjects = batchResult.getParameterObjects();
             KeyGenerator keyGenerator = ms.getKeyGenerator();
             if (keyGenerator instanceof Jdbc3KeyGenerator) {
-              keyGenerator.processAfter(this, ms, stmt, parameter);
+              Jdbc3KeyGenerator jdbc3KeyGenerator = (Jdbc3KeyGenerator) keyGenerator;
+              jdbc3KeyGenerator.processBatch(ms, stmt, parameterObjects);
+            } else {
+              for (Object parameter : parameterObjects) {
+                keyGenerator.processAfter(this, ms, stmt, parameter);
+              }
             }
           } catch (BatchUpdateException e) {
             StringBuffer message = new StringBuffer();
@@ -114,8 +137,3 @@ public class BatchExecutor extends BaseExecutor {
   }
 
 }
-
-
-
-
-

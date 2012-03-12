@@ -1,26 +1,42 @@
+/*
+ *    Copyright 2009-2011 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.mapping;
-
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
 
 import org.apache.ibatis.session.Configuration;
 import org.apache.ibatis.type.JdbcType;
 import org.apache.ibatis.type.TypeHandler;
 import org.apache.ibatis.type.TypeHandlerRegistry;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
 public class ResultMapping {
 
   private Configuration configuration;
   private String property;
   private String column;
-  private Class javaType;
+  private Class<?> javaType;
   private JdbcType jdbcType;
-  private TypeHandler typeHandler;
+  private TypeHandler<?> typeHandler;
   private String nestedResultMapId;
   private String nestedQueryId;
   private Set<String> notNullColumns;
+  private String columnPrefix;
   private List<ResultFlag> flags;
   private List<ResultMapping> composites;
 
@@ -30,7 +46,7 @@ public class ResultMapping {
   public static class Builder {
     private ResultMapping resultMapping = new ResultMapping();
 
-    public Builder(Configuration configuration, String property, String column, TypeHandler typeHandler) {
+    public Builder(Configuration configuration, String property, String column, TypeHandler<?> typeHandler) {
       resultMapping.configuration = configuration;
       resultMapping.property = property;
       resultMapping.column = column;
@@ -39,7 +55,7 @@ public class ResultMapping {
       resultMapping.composites = new ArrayList<ResultMapping>();
     }
 
-    public Builder(Configuration configuration, String property, String column, Class javaType) {
+    public Builder(Configuration configuration, String property, String column, Class<?> javaType) {
       resultMapping.configuration = configuration;
       resultMapping.property = property;
       resultMapping.column = column;
@@ -55,7 +71,7 @@ public class ResultMapping {
       resultMapping.composites = new ArrayList<ResultMapping>();
     }
 
-    public Builder javaType(Class javaType) {
+    public Builder javaType(Class<?> javaType) {
       resultMapping.javaType = javaType;
       return this;
     }
@@ -79,13 +95,18 @@ public class ResultMapping {
       resultMapping.notNullColumns = notNullColumns;
       return this;
     }
-      
+
+    public Builder columnPrefix(String columnPrefix) {
+      resultMapping.columnPrefix = columnPrefix;
+      return this;
+    }
+
     public Builder flags(List<ResultFlag> flags) {
       resultMapping.flags = flags;
       return this;
     }
 
-    public Builder typeHandler(TypeHandler typeHandler) {
+    public Builder typeHandler(TypeHandler<?> typeHandler) {
       resultMapping.typeHandler = typeHandler;
       return this;
     }
@@ -127,7 +148,7 @@ public class ResultMapping {
     return column;
   }
 
-  public Class getJavaType() {
+  public Class<?> getJavaType() {
     return javaType;
   }
 
@@ -135,7 +156,7 @@ public class ResultMapping {
     return jdbcType;
   }
 
-  public TypeHandler getTypeHandler() {
+  public TypeHandler<?> getTypeHandler() {
     return typeHandler;
   }
 
@@ -149,6 +170,10 @@ public class ResultMapping {
 
   public Set<String> getNotNullColumns() {
 	return notNullColumns;
+  }
+
+  public String getColumnPrefix() {
+    return columnPrefix;
   }
 
   public List<ResultFlag> getFlags() {
@@ -174,7 +199,7 @@ public class ResultMapping {
 
     ResultMapping that = (ResultMapping) o;
 
-    if (!property.equals(that.property)) {
+    if (property == null || !property.equals(that.property)) {
       return false;
     }
 
@@ -183,6 +208,12 @@ public class ResultMapping {
 
   @Override
   public int hashCode() {
-    return property.hashCode();
+	if (property != null) {
+		return property.hashCode();
+	} else if (column != null) {
+		return column.hashCode();
+	} else {
+		return 0;
+	}
   }
 }

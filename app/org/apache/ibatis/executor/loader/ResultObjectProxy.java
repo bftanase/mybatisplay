@@ -1,8 +1,21 @@
+/*
+ *    Copyright 2009-2012 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.executor.loader;
 
 import java.lang.reflect.Method;
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
 import java.util.Set;
@@ -19,26 +32,28 @@ import org.apache.ibatis.reflection.ExceptionUtil;
 import org.apache.ibatis.reflection.factory.ObjectFactory;
 import org.apache.ibatis.reflection.property.PropertyCopier;
 import org.apache.ibatis.reflection.property.PropertyNamer;
-import org.apache.ibatis.type.TypeHandlerRegistry;
+import org.apache.ibatis.session.Configuration;
 
-public class ResultObjectProxy {
+public final class ResultObjectProxy {
 
   private static final Log log = LogFactory.getLog(ResultObjectProxy.class);
 
-  private static final Set<String> objectMethods = new HashSet<String>(Arrays.asList(new String[] { "equals", "clone", "hashCode", "toString" }));
-  private static final TypeHandlerRegistry registry = new TypeHandlerRegistry();
   private static final String FINALIZE_METHOD = "finalize";
   private static final String WRITE_REPLACE_METHOD = "writeReplace";
 
-  public static Object createProxy(Object target, ResultLoaderMap lazyLoader, boolean aggressive, ObjectFactory objectFactory, List<Class> constructorArgTypes, List<Object> constructorArgs) {
-    return EnhancedResultObjectProxyImpl.createProxy(target, lazyLoader, aggressive, objectFactory, constructorArgTypes, constructorArgs);
+  private ResultObjectProxy() {
+    // disable construction
   }
 
-  public static Object createDeserializationProxy(Object target, Set<String> unloadedProperties, ObjectFactory objectFactory, List<Class> constructorArgTypes, List<Object> constructorArgs) {
+  public static Object createProxy(Object target, ResultLoaderMap lazyLoader, Configuration configuration, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
+    return EnhancedResultObjectProxyImpl.createProxy(target, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
+  }
+
+  public static Object createDeserializationProxy(Object target, Set<String> unloadedProperties, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
     return EnhancedDeserializationProxyImpl.createProxy(target, unloadedProperties, objectFactory, constructorArgTypes, constructorArgs);
   }
 
-  private static Object crateProxy(Class type, Callback callback, List<Class> constructorArgTypes, List<Object> constructorArgs) {
+  private static Object crateProxy(Class<?> type, Callback callback, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
 
     Enhancer enhancer = new Enhancer();
     enhancer.setCallback(callback);
@@ -58,7 +73,7 @@ public class ResultObjectProxy {
     if (constructorArgTypes.isEmpty()) {
       enhanced = enhancer.create();
     } else {
-      Class[] typesArray = constructorArgTypes.toArray(new Class[constructorArgTypes.size()]);
+      Class<?>[] typesArray = constructorArgTypes.toArray(new Class[constructorArgTypes.size()]);
       Object[] valuesArray = constructorArgs.toArray(new Object[constructorArgs.size()]);
       enhanced = enhancer.create(typesArray, valuesArray);
     }
@@ -66,32 +81,30 @@ public class ResultObjectProxy {
   }
 
   private static class EnhancedResultObjectProxyImpl implements MethodInterceptor {
-    private Class type;
+    private Class<?> type;
     private ResultLoaderMap lazyLoader;
     private boolean aggressive;
+    private Set<String> lazyLoadTriggerMethods;
     private ObjectFactory objectFactory;
-    private List<Class> constructorArgTypes;
+    private List<Class<?>> constructorArgTypes;
     private List<Object> constructorArgs;
 
-    private EnhancedResultObjectProxyImpl(Class type, ResultLoaderMap lazyLoader, boolean aggressive, ObjectFactory objectFactory, List<Class> constructorArgTypes, List<Object> constructorArgs) {
+    private EnhancedResultObjectProxyImpl(Class<?> type, ResultLoaderMap lazyLoader, Configuration configuration, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
       this.type = type;
       this.lazyLoader = lazyLoader;
-      this.aggressive = aggressive;
+      this.aggressive = configuration.isAggressiveLazyLoading();
+      this.lazyLoadTriggerMethods = configuration.getLazyLoadTriggerMethods();
       this.objectFactory = objectFactory;
       this.constructorArgTypes = constructorArgTypes;
       this.constructorArgs = constructorArgs;
     }
 
-    public static Object createProxy(Object target, ResultLoaderMap lazyLoader, boolean aggressive, ObjectFactory objectFactory, List<Class> constructorArgTypes, List<Object> constructorArgs) {
-      final Class type = target.getClass();
-      if (registry.hasTypeHandler(type)) {
-        return target;
-      } else {        
-        EnhancedResultObjectProxyImpl callback = new EnhancedResultObjectProxyImpl(type, lazyLoader, aggressive, objectFactory, constructorArgTypes, constructorArgs);
-        Object enhanced = crateProxy(type, callback, constructorArgTypes, constructorArgs);
-        PropertyCopier.copyBeanProperties(type, target, enhanced);
-        return enhanced;
-      }
+    public static Object createProxy(Object target, ResultLoaderMap lazyLoader, Configuration configuration, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
+      final Class<?> type = target.getClass();
+      EnhancedResultObjectProxyImpl callback = new EnhancedResultObjectProxyImpl(type, lazyLoader, configuration, objectFactory, constructorArgTypes, constructorArgs);
+      Object enhanced = crateProxy(type, callback, constructorArgTypes, constructorArgs);
+      PropertyCopier.copyBeanProperties(type, target, enhanced);
+      return enhanced;
     }
 
     public Object intercept(Object enhanced, Method method, Object[] args, MethodProxy methodProxy) throws Throwable {
@@ -113,7 +126,7 @@ public class ResultObjectProxy {
             }
           } else {
             if (lazyLoader.size() > 0 && !FINALIZE_METHOD.equals(methodName)) {
-              if (aggressive || objectMethods.contains(methodName)) {
+              if (aggressive || lazyLoadTriggerMethods.contains(methodName)) {
                 lazyLoader.loadAll();
               } else if (PropertyNamer.isProperty(methodName)) {
                 final String property = PropertyNamer.methodToProperty(methodName);
@@ -132,13 +145,13 @@ public class ResultObjectProxy {
   }
 
   private static class EnhancedDeserializationProxyImpl implements MethodInterceptor {
-    private Class type;
+    private Class<?> type;
     private Set<String> unloadedProperties;
     private ObjectFactory objectFactory;
-    private List<Class> constructorArgTypes;
+    private List<Class<?>> constructorArgTypes;
     private List<Object> constructorArgs;
 
-    private EnhancedDeserializationProxyImpl(Class type, Set<String> unloadedProperties, ObjectFactory objectFactory, List<Class> constructorArgTypes, List<Object> constructorArgs) {
+    private EnhancedDeserializationProxyImpl(Class<?> type, Set<String> unloadedProperties, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
       this.type = type;
       this.unloadedProperties = unloadedProperties;
       this.objectFactory = objectFactory;
@@ -146,8 +159,8 @@ public class ResultObjectProxy {
       this.constructorArgs = constructorArgs;
     }
 
-    public static Object createProxy(Object target, Set<String> unloadedProperties, ObjectFactory objectFactory, List<Class> constructorArgTypes, List<Object> constructorArgs) {
-      final Class type = target.getClass();
+    public static Object createProxy(Object target, Set<String> unloadedProperties, ObjectFactory objectFactory, List<Class<?>> constructorArgTypes, List<Object> constructorArgs) {
+      final Class<?> type = target.getClass();
       EnhancedDeserializationProxyImpl callback = new EnhancedDeserializationProxyImpl(type, unloadedProperties, objectFactory, constructorArgTypes, constructorArgs);
       Object enhanced = crateProxy(type, callback, constructorArgTypes, constructorArgs);
       PropertyCopier.copyBeanProperties(type, target, enhanced);
@@ -170,7 +183,7 @@ public class ResultObjectProxy {
           if (!FINALIZE_METHOD.equals(methodName) && PropertyNamer.isProperty(methodName)) {
             final String property = PropertyNamer.methodToProperty(methodName);
             if (unloadedProperties.contains(property.toUpperCase(Locale.ENGLISH))) {
-              throw new ExecutorException("An attempt has been made to read a not loaded lazy property '" 
+              throw new ExecutorException("An attempt has been made to read a not loaded lazy property '"
                   + property
                   + "' of a disconnected object");
             }

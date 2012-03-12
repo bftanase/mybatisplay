@@ -1,26 +1,21 @@
+/*
+ *    Copyright 2009-2011 The MyBatis Team
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ */
 package org.apache.ibatis.jdbc;
 
-import org.apache.ibatis.type.BigDecimalTypeHandler;
-import org.apache.ibatis.type.BlobTypeHandler;
-import org.apache.ibatis.type.BooleanTypeHandler;
-import org.apache.ibatis.type.ByteArrayTypeHandler;
-import org.apache.ibatis.type.ByteTypeHandler;
-import org.apache.ibatis.type.ClobTypeHandler;
-import org.apache.ibatis.type.DateOnlyTypeHandler;
-import org.apache.ibatis.type.DateTypeHandler;
-import org.apache.ibatis.type.DoubleTypeHandler;
-import org.apache.ibatis.type.FloatTypeHandler;
-import org.apache.ibatis.type.IntegerTypeHandler;
-import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.LongTypeHandler;
-import org.apache.ibatis.type.ObjectTypeHandler;
-import org.apache.ibatis.type.ShortTypeHandler;
-import org.apache.ibatis.type.SqlDateTypeHandler;
-import org.apache.ibatis.type.SqlTimeTypeHandler;
-import org.apache.ibatis.type.SqlTimestampTypeHandler;
-import org.apache.ibatis.type.StringTypeHandler;
-import org.apache.ibatis.type.TimeOnlyTypeHandler;
-import org.apache.ibatis.type.TypeHandler;
+import org.apache.ibatis.type.*;
 
 public enum Null {
   BOOLEAN(new BooleanTypeHandler(), JdbcType.BOOLEAN),
