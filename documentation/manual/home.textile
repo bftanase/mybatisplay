@@ -1,14 +1,14 @@
 h1. MyBatisPlay
 
-This module allows you to use MyBatis persistence framework with play. Included is MyBatis version 3.1.0
-
-* Contains a fix for a classloader issue when using default mybatis cache (SerializedCache)
+This module allows you to use MyBatis persistence framework with play. This version no longer includes MyBatis source, since the issue #530
+has been fixed and the previous patch is not necessary anymore.
 
 * It will detect changes to the xml configuration files and reinitialize the SqlSessionFactory
 
 h2. What's new?
 
-Updated MyBatis source to MyBatis 3.1.0
+* Removed MyBatis source code
+* MyBatis dependency must be defined in your application dependencies.yml file
 
 h2. Sample application
 
@@ -22,9 +22,10 @@ go to http://localhost:9000/@tests and run @GuestBookMapperTest@
 
 h2. Getting started
 
-To install MyBatisPlay add it as a dependency in your dependencies.yml file:
+To install MyBatisPlay add it as a dependency in your dependencies.yml file; also you must add MyBatis dependency too:
 
 bc. require:
+      - org.mybatis -> mybatis 3.1.1 # in the future, you could probably use any version greater than 3.1.1 
       - play -> mybatisplay {version}
 
 h2. Configuration
