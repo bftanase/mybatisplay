@@ -1,7 +1,6 @@
 h1. MyBatisPlay
 
-This module allows you to use MyBatis persistence framework with play. This version no longer includes MyBatis source, since the issue #530
-has been fixed and the previous patch is not necessary anymore.
+This module allows you to use MyBatis persistence framework with play. This version no longer includes MyBatis source, since the issue #530 has been fixed and the previous patch is not necessary anymore.
 
 * It will detect changes to the xml configuration files and reinitialize the SqlSessionFactory
 
