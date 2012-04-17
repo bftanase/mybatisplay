@@ -6,3 +6,4 @@ modules
 eclipse
 test-result
 dist
+commands.pyc
