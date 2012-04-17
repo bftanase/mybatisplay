@@ -7,3 +7,4 @@ eclipse
 test-result
 dist
 commands.pyc
+samples-and-test/mybatisapp/lib
